@@ -7,7 +7,12 @@ import {
   PANEL_CATEGORIES,
   INVERTER_BRANDS,
   BATTERY_BRANDS,
-  calculateQuote,
+  PLANT_LOAD_OPTIONS,
+  FLOOR_OPTIONS,
+  formatPlantLoad,
+  formatFloors,
+  systemNeedsWiring,
+  calculateQuoteBreakdown,
   formatINR,
 } from "../data/quotationData";
 
@@ -29,7 +34,13 @@ function SectionTitle({ step, title, subtitle }) {
 
 function OptionCards({ options, value, onChange, columns = 2, compact = false }) {
   const gridCls =
-    columns === 3
+    columns === 1
+      ? "grid grid-cols-1 gap-2.5"
+      :     columns === 4
+      ? "grid grid-cols-2 sm:grid-cols-4 gap-2.5"
+      : columns === 5
+      ? "grid grid-cols-2 sm:grid-cols-5 gap-2.5"
+      : columns === 3
       ? "grid grid-cols-1 xs:grid-cols-3 gap-2.5"
       : columns === 2
       ? "grid grid-cols-2 gap-2.5"
@@ -117,8 +128,122 @@ function SummaryRow({ label, value, done }) {
   );
 }
 
+function ConfigMapRow({ label, value, hint }) {
+  return (
+    <div className="py-2 border-b border-white/5 last:border-0">
+      <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-white leading-snug">{value}</p>
+      {hint && <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{hint}</p>}
+    </div>
+  );
+}
+
+function MatchedConfiguration({ matched }) {
+  if (!matched) return null;
+
+  const { system, panel, inverter, battery, compatibility } = matched;
+
+  return (
+    <div className="rounded-xl border border-orange-500/25 bg-orange-950/20 mb-4 overflow-hidden">
+      <div className="px-3 py-2.5 bg-orange-500/10 border-b border-orange-500/20">
+        <p className="text-orange-400 font-semibold text-xs">Recommended system mapping</p>
+        <p className="text-[10px] text-slate-400 mt-0.5">Lowest-cost compatible configuration</p>
+      </div>
+
+      <div className="px-3 py-2 space-y-3">
+        {/* Wiring / floors */}
+        {system?.wiring && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="w-5 h-5 rounded-md bg-purple-500/20 flex items-center justify-center text-purple-400 text-[10px] font-bold">
+                W
+              </span>
+              <span className="text-xs font-semibold text-slate-200">Wiring</span>
+            </div>
+            <div className="pl-6 space-y-0">
+              <ConfigMapRow
+                label="Building floors"
+                value={`${system.floors} floor${system.floors > 1 ? "s" : ""}`}
+              />
+              <ConfigMapRow
+                label="Rate"
+                value={
+                  system.systemType === "hybrid"
+                    ? "₹5,000 per floor (hybrid)"
+                    : "₹3,000 per floor (on-grid)"
+                }
+              />
+              <ConfigMapRow label="Wiring cost" value={system.wiring.summary} />
+            </div>
+          </div>
+        )}
+
+        {/* Panels */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="w-5 h-5 rounded-md bg-amber-500/20 flex items-center justify-center text-amber-400 text-[10px] font-bold">
+              P
+            </span>
+            <span className="text-xs font-semibold text-slate-200">Solar panels</span>
+          </div>
+          <div className="pl-6 space-y-0">
+            <ConfigMapRow label="Brand & type" value={`${panel.company} ${panel.categoryLabel}`} />
+            <ConfigMapRow label="Module" value={`${panel.wattPerPanel}W · ${panel.dcrLabel}`} hint={system.panelTierRule} />
+            <ConfigMapRow
+              label="Array size"
+              value={panel.summary}
+              hint={compatibility.panelToLoad}
+            />
+            <ConfigMapRow label="Total DC capacity" value={`${panel.totalKwp} kWp (${panel.totalWatts} W)`} />
+          </div>
+        </div>
+
+        {/* Inverter */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="w-5 h-5 rounded-md bg-blue-500/20 flex items-center justify-center text-blue-400 text-[10px] font-bold">
+              I
+            </span>
+            <span className="text-xs font-semibold text-slate-200">Inverter</span>
+          </div>
+          <div className="pl-6 space-y-0">
+            <ConfigMapRow label="Brand & rating" value={inverter.summary} hint={compatibility.inverterToLoad} />
+            <ConfigMapRow label="Model" value={inverter.model} />
+            <ConfigMapRow label="DC side" value={inverter.voltageLabel} />
+          </div>
+        </div>
+
+        {/* Battery */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="w-5 h-5 rounded-md bg-green-500/20 flex items-center justify-center text-green-400 text-[10px] font-bold">
+              B
+            </span>
+            <span className="text-xs font-semibold text-slate-200">Battery</span>
+          </div>
+          <div className="pl-6 space-y-0">
+            {battery ? (
+              <>
+                <ConfigMapRow label="Brand & model" value={battery.summary} />
+                <ConfigMapRow label="Specification" value={battery.voltageLabel} />
+                {battery.compatibilityNote && (
+                  <ConfigMapRow label="Compatibility" value={battery.compatibilityNote} hint={compatibility.batteryToInverter} />
+                )}
+              </>
+            ) : (
+              <ConfigMapRow label="Status" value="Not included in this configuration" hint="Hybrid without backup storage" />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PricePanel({ selections, formValid, progress, onReset, hasAnySelection }) {
-  const finalPrice = formValid ? calculateQuote(selections) : null;
+  const breakdown = formValid ? calculateQuoteBreakdown(selections) : null;
+  const finalPrice = breakdown?.finalPrice ?? null;
+  const matched = breakdown?.matched;
 
   const systemLabel = SYSTEM_TYPES.find((s) => s.id === selections.systemType)?.label;
   const panelCategoryLabel = PANEL_CATEGORIES.find((c) => c.id === selections.panelCategory)?.label;
@@ -130,9 +255,13 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
         : selections.wantsBattery
         ? selections.batteryBrand || "Yes — select brand"
         : "Not included"
-      : selections.systemType === "off-grid"
-      ? "Included (off-grid)"
-      : "Not required";
+      : selections.batteryBrand || "Not selected";
+
+  const batteryDone =
+    selections.systemType === "hybrid"
+      ? selections.wantsBattery != null &&
+        (!selections.wantsBattery || !!selections.batteryBrand)
+      : !!selections.batteryBrand;
 
   return (
     <div className="rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-800/50">
@@ -179,7 +308,7 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
               <div>
                 <p className="text-2xl font-bold text-slate-300">—</p>
                 <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-                  Rates for this combination will be added soon.
+                  Unable to match compatible equipment for this configuration.
                 </p>
               </div>
             )
@@ -190,12 +319,20 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
             </div>
           )}
           <p className="text-slate-500 text-[10px] mt-3 uppercase tracking-wide">
-            GST inclusive · Site survey required
+            inclusive of GST where applicable
           </p>
         </div>
 
-        {/* Selection summary */}
+        {matched && <MatchedConfiguration matched={matched} />}
+
+        {/* Your selections */}
+        <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2 px-0.5">Your selections</p>
         <div className="rounded-xl bg-black/20 border border-white/5 px-3 py-0.5 mb-4">
+          <SummaryRow
+            label="Plant load"
+            value={selections.plantLoadKw ? formatPlantLoad(selections.plantLoadKw) : "Not selected"}
+            done={!!selections.plantLoadKw}
+          />
           <SummaryRow
             label="Installation"
             value={selections.installationType || "Not selected"}
@@ -206,11 +343,20 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
             value={systemLabel || "Not selected"}
             done={!!selections.systemType}
           />
-          {selections.systemType === "hybrid" && (
+          {(selections.systemType === "hybrid" ||
+            selections.systemType === "on-grid" ||
+            selections.systemType === "off-grid") && (
             <SummaryRow
               label="Battery"
               value={batterySummary || "Not selected"}
-              done={selections.wantsBattery != null && (!selections.wantsBattery || !!selections.batteryBrand)}
+              done={batteryDone}
+            />
+          )}
+          {systemNeedsWiring(selections.systemType) && (
+            <SummaryRow
+              label="Floors (wiring)"
+              value={selections.floors ? formatFloors(selections.floors) : "Not selected"}
+              done={!!selections.floors}
             />
           )}
           <SummaryRow
@@ -224,9 +370,13 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
             done={!!selections.panelCategory}
           />
           <SummaryRow
-            label="Inverter"
-            value={selections.inverterBrand || "Not selected"}
-            done={!!selections.inverterBrand}
+            label="Inverter pref."
+            value={
+              selections.systemType === "off-grid"
+                ? "Auto (by load)"
+                : selections.inverterBrand || "Not selected"
+            }
+            done={selections.systemType === "off-grid" || !!selections.inverterBrand}
           />
         </div>
 
@@ -254,23 +404,30 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
   );
 }
 
-function computeProgress(selections, showBatteryQuestion) {
+function computeProgress(selections, showBatteryQuestion, showBatteryBrand, showFloorQuestion) {
   const steps = [
+    !!selections.plantLoadKw,
     !!selections.installationType,
     !!selections.systemType,
   ];
+
+  if (showFloorQuestion) {
+    steps.push(!!selections.floors);
+  }
 
   if (showBatteryQuestion) {
     steps.push(
       selections.wantsBattery != null &&
         (!selections.wantsBattery || !!selections.batteryBrand)
     );
+  } else if (showBatteryBrand) {
+    steps.push(!!selections.batteryBrand);
   }
 
   steps.push(
     !!selections.panelCompany,
     !!selections.panelCategory,
-    !!selections.inverterBrand
+    selections.systemType === "off-grid" ? true : !!selections.inverterBrand
   );
 
   const done = steps.filter(Boolean).length;
@@ -280,8 +437,10 @@ function computeProgress(selections, showBatteryQuestion) {
 }
 
 export default function QuotationGenerator() {
+  const [plantLoadKw, setPlantLoadKw] = useState(null);
   const [installationType, setInstallationType] = useState("");
   const [systemType, setSystemType] = useState("");
+  const [floors, setFloors] = useState(null);
   const [wantsBattery, setWantsBattery] = useState(null);
   const [panelCompany, setPanelCompany] = useState("");
   const [panelCategory, setPanelCategory] = useState("");
@@ -289,44 +448,64 @@ export default function QuotationGenerator() {
   const [batteryBrand, setBatteryBrand] = useState("");
 
   const showBatteryQuestion = systemType === "hybrid";
-  const showBatteryBrand = systemType === "hybrid" && wantsBattery === true;
+  const showBatteryBrand =
+    systemType === "on-grid" ||
+    systemType === "off-grid" ||
+    (systemType === "hybrid" && wantsBattery === true);
+  const showFloorQuestion = systemType === "on-grid" || systemType === "hybrid";
+
+  const resolvedWantsBattery =
+    systemType === "hybrid"
+      ? wantsBattery
+      : systemType === "on-grid" || systemType === "off-grid"
+      ? true
+      : null;
 
   const selections = useMemo(
     () => ({
+      plantLoadKw,
       installationType,
       systemType,
-      wantsBattery: showBatteryQuestion ? wantsBattery : null,
+      floors: showFloorQuestion ? floors : null,
+      wantsBattery: resolvedWantsBattery,
       panelCompany,
       panelCategory,
       inverterBrand,
       batteryBrand: showBatteryBrand ? batteryBrand : null,
     }),
     [
+      plantLoadKw,
       installationType,
       systemType,
-      wantsBattery,
+      floors,
+      resolvedWantsBattery,
       panelCompany,
       panelCategory,
       inverterBrand,
       batteryBrand,
-      showBatteryQuestion,
       showBatteryBrand,
+      showFloorQuestion,
     ]
   );
 
   const formValid = isFormValid(selections);
-  const progress = computeProgress(selections, showBatteryQuestion);
-  const hasAnySelection = !!(installationType || systemType || panelCompany);
+  const progress = computeProgress(selections, showBatteryQuestion, showBatteryBrand, showFloorQuestion);
+  const hasAnySelection = !!(plantLoadKw || installationType || systemType || panelCompany);
 
   function handleSystemTypeChange(type) {
     setSystemType(type);
     setWantsBattery(null);
     setBatteryBrand("");
+    setFloors(null);
+    if (type === "on-grid" || type === "hybrid") setInverterBrand("Invergy");
+    else setInverterBrand("");
   }
 
   function handleReset() {
+    setPlantLoadKw(null);
     setInstallationType("");
     setSystemType("");
+    setFloors(null);
     setWantsBattery(null);
     setPanelCompany("");
     setPanelCategory("");
@@ -391,6 +570,21 @@ export default function QuotationGenerator() {
                 <div>
                   <SectionTitle
                     step={nextStep()}
+                    title="Plant Load"
+                    subtitle="Required system capacity"
+                  />
+                  <OptionCards
+                    options={PLANT_LOAD_OPTIONS}
+                    value={plantLoadKw}
+                    onChange={setPlantLoadKw}
+                    columns={4}
+                    compact
+                  />
+                </div>
+
+                <div className="border-t border-slate-100 pt-8">
+                  <SectionTitle
+                    step={nextStep()}
                     title="Installation Type"
                     subtitle="Residential or commercial property"
                   />
@@ -416,6 +610,27 @@ export default function QuotationGenerator() {
                     columns={3}
                   />
                 </div>
+
+                {showFloorQuestion && (
+                  <div className="border-t border-slate-100 pt-8">
+                    <SectionTitle
+                      step={nextStep()}
+                      title="Building Floors"
+                      subtitle={
+                        systemType === "hybrid"
+                          ? "Wiring: ₹5,000 per floor"
+                          : "Wiring: ₹3,000 per floor"
+                      }
+                    />
+                    <OptionCards
+                      options={FLOOR_OPTIONS}
+                      value={floors}
+                      onChange={setFloors}
+                      columns={5}
+                      compact
+                    />
+                  </div>
+                )}
 
                 {showBatteryQuestion && (
                   <div className="border-t border-slate-100 pt-8">
@@ -471,15 +686,25 @@ export default function QuotationGenerator() {
                   <SectionTitle
                     step={nextStep()}
                     title="Inverter"
-                    subtitle="Choose your inverter brand"
+                    subtitle={
+                      systemType === "off-grid"
+                        ? "Auto-selected — Microtek ≤4 kW, Invergy above"
+                        : "On-grid & hybrid use Invergy (auto-matched to load)"
+                    }
                   />
-                  <OptionCards
-                    options={INVERTER_BRANDS}
-                    value={inverterBrand}
-                    onChange={setInverterBrand}
-                    columns={2}
-                    compact
-                  />
+                  {systemType === "off-grid" ? (
+                    <p className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                      Inverter is chosen automatically for the lowest compatible price based on your plant load.
+                    </p>
+                  ) : (
+                    <OptionCards
+                      options={INVERTER_BRANDS.filter((b) => b === "Invergy")}
+                      value={inverterBrand || "Invergy"}
+                      onChange={setInverterBrand}
+                      columns={1}
+                      compact
+                    />
+                  )}
                 </div>
 
                 {showBatteryBrand && (
@@ -487,7 +712,13 @@ export default function QuotationGenerator() {
                     <SectionTitle
                       step={nextStep()}
                       title="Battery Brand"
-                      subtitle="Select battery manufacturer"
+                      subtitle={
+                        systemType === "off-grid"
+                          ? "Required for standalone power"
+                          : systemType === "on-grid"
+                          ? "Select battery manufacturer"
+                          : "Select battery manufacturer"
+                      }
                     />
                     <OptionCards
                       options={BATTERY_BRANDS}
@@ -513,8 +744,10 @@ export default function QuotationGenerator() {
 
 function isFormValid(selections) {
   const {
+    plantLoadKw,
     installationType,
     systemType,
+    floors,
     wantsBattery,
     panelCompany,
     panelCategory,
@@ -522,13 +755,19 @@ function isFormValid(selections) {
     batteryBrand,
   } = selections;
 
-  if (!installationType || !systemType || !panelCompany || !panelCategory || !inverterBrand) {
+  if (!plantLoadKw || !installationType || !systemType || !panelCompany || !panelCategory) {
     return false;
   }
+
+  if (systemNeedsWiring(systemType) && !floors) return false;
+
+  if (systemType !== "off-grid" && !inverterBrand) return false;
 
   if (systemType === "hybrid") {
     if (wantsBattery == null) return false;
     if (wantsBattery && !batteryBrand) return false;
+  } else if (systemType === "on-grid" || systemType === "off-grid") {
+    if (!batteryBrand) return false;
   }
 
   return true;

@@ -10,7 +10,7 @@ import {
   INVERGY_HYBRID_QUOTE_PRICES,
   INVERGY_OFFGRID_OG,
 } from "../data/prices/invergy.js";
-import { MICROTEK_OFFGRID_PWM, MICROTEK_OFFGRID_MAX_KW } from "../data/prices/microtek.js";
+import { MICROTEK_OFFGRID_PWM, MICROTEK_OFFGRID_MAX_KW, MICROTEK_ONGRID_GTI, MICROTEK_HYBRID } from "../data/prices/microtek.js";
 import { GST } from "../data/prices/taxes.js";
 
 /** Map battery nominal V → inverter DC bus bucket (12 / 24 / 48) */
@@ -67,6 +67,60 @@ export function selectBestPanel(company, category, plantKw, systemType) {
   }
 
   return best;
+}
+
+function pickMicrotekOnGrid(plantKw, preferSinglePhase = true) {
+  const phaseOrder = preferSinglePhase
+    ? ["singlePhase", "threePhase"]
+    : ["threePhase", "singlePhase"];
+
+  for (const phase of phaseOrder) {
+    const list = MICROTEK_ONGRID_GTI[phase] ?? [];
+    const candidates = list
+      .filter((i) => i.capacityKw >= plantKw)
+      .sort((a, b) => a.priceExGst - b.priceExGst);
+
+    if (candidates.length) {
+      const inv = candidates[0];
+      return {
+        brand: "Microtek",
+        modelNo: `Microtek GTI ${inv.capacityKw}kW`,
+        capacityKw: inv.capacityKw,
+        cost: withMicrotekGst(inv.priceExGst),
+        dcBusVoltage: null,
+        gstIncluded: false,
+      };
+    }
+  }
+
+  return null;
+}
+
+function pickMicrotekHybrid(plantKw, preferSinglePhase = true) {
+  const phaseOrder = preferSinglePhase
+    ? ["singlePhase", "threePhase"]
+    : ["threePhase", "singlePhase"];
+
+  for (const phase of phaseOrder) {
+    const list = MICROTEK_HYBRID[phase === "singlePhase" ? "singlePhase" : "threePhase"] ?? [];
+    const candidates = list
+      .filter((i) => i.capacityKw >= plantKw)
+      .sort((a, b) => a.priceExGst - b.priceExGst);
+
+    if (candidates.length) {
+      const inv = candidates[0];
+      return {
+        brand: "Microtek",
+        modelNo: `Microtek Hybrid ${inv.capacityKw}kW`,
+        capacityKw: inv.capacityKw,
+        cost: withMicrotekGst(inv.priceExGst),
+        dcBusVoltage: parseInverterDcVoltage(inv.voltage),
+        gstIncluded: false,
+      };
+    }
+  }
+
+  return null;
 }
 
 function pickSmallestInvergyOnGrid(plantKw, preferSinglePhase = true) {
@@ -173,17 +227,21 @@ function pickInvergyOffGrid(plantKw) {
   };
 }
 
-export function selectBestInverter(systemType, plantKw, { withBattery = false } = {}) {
+export function selectBestInverter(systemType, plantKw, { withBattery = false, inverterBrand = "Invergy" } = {}) {
+  const brand = inverterBrand === "Microtek" ? "Microtek" : "Invergy";
+
   if (systemType === "on-grid" && !withBattery) {
-    return pickSmallestInvergyOnGrid(plantKw);
+    return brand === "Microtek"
+      ? pickMicrotekOnGrid(plantKw)
+      : pickSmallestInvergyOnGrid(plantKw);
   }
 
   if (systemType === "hybrid" || (systemType === "on-grid" && withBattery)) {
-    return pickInvergyHybrid(plantKw);
+    return brand === "Microtek" ? pickMicrotekHybrid(plantKw) : pickInvergyHybrid(plantKw);
   }
 
   if (systemType === "off-grid") {
-    if (plantKw <= MICROTEK_OFFGRID_MAX_KW) {
+    if (brand === "Microtek" && plantKw <= MICROTEK_OFFGRID_MAX_KW) {
       return pickMicrotekOffGrid(plantKw);
     }
     return pickInvergyOffGrid(plantKw);
@@ -254,9 +312,9 @@ export function requiresBatteryBrand(systemType, wantsBattery) {
   return needsBattery(systemType, wantsBattery);
 }
 
-export function selectInverterAndBattery(systemType, plantKw, batteryBrand, wantsBattery) {
+export function selectInverterAndBattery(systemType, plantKw, batteryBrand, wantsBattery, inverterBrand) {
   const withBattery = needsBattery(systemType, wantsBattery);
-  const inverter = selectBestInverter(systemType, plantKw, { withBattery });
+  const inverter = selectBestInverter(systemType, plantKw, { withBattery, inverterBrand });
   if (!inverter) return { inverter: null, battery: null };
 
   if (!needsBattery(systemType, wantsBattery)) {

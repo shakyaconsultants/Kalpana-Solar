@@ -19,4 +19,5 @@ export {
 } from "./quotationOptions.js";
 
 export { formatINR } from "./formatCurrency.js";
+export { getAllowedInverterBrands, resolveInverterBrand } from "./prices/inverterRules.js";
 export { calculateQuote, calculateQuoteBreakdown, isValidSelections } from "../calculations/calculateQuote.js";

@@ -1,7 +1,7 @@
 /**
  * Inverter price index — re-exports brand-specific catalogs.
- * On-Grid & Hybrid: Invergy only.
- * Off-Grid: Microtek ≤4 kW, Invergy >4 kW.
+ * On-Grid & Hybrid: Invergy or Microtek (user choice).
+ * Off-Grid: Microtek ≤4 kW, Invergy above 4 kW (or user choice when both apply).
  */
 
 export {
@@ -38,6 +38,7 @@ export {
   INVERTER_SELECTION_RULES,
   resolveOffGridInverterBrand,
   getAllowedInverterBrands,
+  resolveInverterBrand,
 } from "./inverterRules.js";
 
 export const INVERTER_BRAND_IDS = {

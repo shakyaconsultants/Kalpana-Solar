@@ -4,12 +4,12 @@
 
 export const INVERTER_SELECTION_RULES = {
   "on-grid": {
-    allowedBrands: ["Invergy"],
-    note: "On-Grid — Invergy only",
+    allowedBrands: ["Invergy", "Microtek"],
+    note: "On-Grid — Invergy or Microtek",
   },
   hybrid: {
-    allowedBrands: ["Invergy"],
-    note: "Hybrid — Invergy only",
+    allowedBrands: ["Invergy", "Microtek"],
+    note: "Hybrid — Invergy or Microtek",
   },
   "off-grid": {
     microtekMaxKw: 4,
@@ -28,9 +28,24 @@ export function resolveOffGridInverterBrand(plantKw) {
   return "invergy";
 }
 
-export function getAllowedInverterBrands(systemType) {
+export function getAllowedInverterBrands(systemType, plantKw = null) {
   const rule = INVERTER_SELECTION_RULES[systemType];
   if (!rule) return [];
-  if (systemType === "off-grid") return ["Microtek", "Invergy"];
+
+  if (systemType === "off-grid") {
+    if (plantKw != null && plantKw > rule.microtekMaxKw) {
+      return ["Invergy"];
+    }
+    return ["Invergy", "Microtek"];
+  }
+
   return rule.allowedBrands;
+}
+
+/** Resolved brand for quote — auto-picks when only one option exists */
+export function resolveInverterBrand(systemType, plantKw, selectedBrand) {
+  const allowed = getAllowedInverterBrands(systemType, plantKw);
+  if (!allowed.length) return null;
+  if (allowed.length === 1) return allowed[0];
+  return allowed.includes(selectedBrand) ? selectedBrand : null;
 }

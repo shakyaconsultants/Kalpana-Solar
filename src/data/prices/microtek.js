@@ -20,7 +20,7 @@ export const MICROTEK_META = {
 
 export const MICROTEK_OFFGRID_MAX_KW = 4;
 
-// ─── On-Grid GTI (ex-GST — not used for on-grid quotes; Invergy only) ──────
+// ─── On-Grid GTI (ex-GST + 5% GST) ──────
 
 export const MICROTEK_ONGRID_GTI = {
   singlePhase: [
@@ -43,7 +43,7 @@ export const MICROTEK_ONGRID_GTI = {
   ],
 };
 
-// ─── Hybrid IP65 (ex-GST — not used for hybrid quotes; Invergy only) ──────
+// ─── Hybrid IP65 (ex-GST + 5% GST) ──────
 
 export const MICROTEK_HYBRID = {
   singlePhase: [

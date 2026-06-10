@@ -18,6 +18,7 @@ import {
   selectInverterAndBattery,
   needsBattery,
 } from "./matching.js";
+import { resolveInverterBrand } from "../data/prices/inverterRules.js";
 
 export function isValidSelections(selections) {
   const {
@@ -38,7 +39,7 @@ export function isValidSelections(selections) {
 
   if (needsWiring(systemType) && !floors) return false;
 
-  if (systemType !== "off-grid" && !inverterBrand) return false;
+  if (!resolveInverterBrand(systemType, plantLoadKw, inverterBrand)) return false;
 
   if (systemType === "hybrid") {
     if (wantsBattery == null) return false;
@@ -64,17 +65,20 @@ function calculateCivilCost(plantKw) {
 export function calculateQuoteBreakdown(selections) {
   if (!isValidSelections(selections)) return null;
 
-  const { plantLoadKw, systemType, floors, wantsBattery, panelCompany, panelCategory, batteryBrand } =
+  const { plantLoadKw, systemType, floors, wantsBattery, panelCompany, panelCategory, batteryBrand, inverterBrand } =
     selections;
 
   const panel = selectBestPanel(panelCompany, panelCategory, plantLoadKw, systemType);
   if (!panel) return null;
 
+  const resolvedInverterBrand = resolveInverterBrand(systemType, plantLoadKw, inverterBrand);
+
   const { inverter, battery, error } = selectInverterAndBattery(
     systemType,
     plantLoadKw,
     batteryBrand,
-    wantsBattery
+    wantsBattery,
+    resolvedInverterBrand
   );
 
   if (!inverter || error) return null;

@@ -5,7 +5,6 @@ import {
   SYSTEM_TYPES,
   PANEL_COMPANIES,
   PANEL_CATEGORIES,
-  INVERTER_BRANDS,
   BATTERY_BRANDS,
   PLANT_LOAD_OPTIONS,
   FLOOR_OPTIONS,
@@ -14,6 +13,8 @@ import {
   systemNeedsWiring,
   calculateQuoteBreakdown,
   formatINR,
+  getAllowedInverterBrands,
+  resolveInverterBrand,
 } from "../data/quotationData";
 
 function SectionTitle({ step, title, subtitle }) {
@@ -370,13 +371,9 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
             done={!!selections.panelCategory}
           />
           <SummaryRow
-            label="Inverter pref."
-            value={
-              selections.systemType === "off-grid"
-                ? "Auto (by load)"
-                : selections.inverterBrand || "Not selected"
-            }
-            done={selections.systemType === "off-grid" || !!selections.inverterBrand}
+            label="Inverter"
+            value={selections.inverterBrand || "Not selected"}
+            done={!!selections.inverterBrand}
           />
         </div>
 
@@ -427,7 +424,7 @@ function computeProgress(selections, showBatteryQuestion, showBatteryBrand, show
   steps.push(
     !!selections.panelCompany,
     !!selections.panelCategory,
-    selections.systemType === "off-grid" ? true : !!selections.inverterBrand
+    !!selections.inverterBrand
   );
 
   const done = steps.filter(Boolean).length;
@@ -446,6 +443,16 @@ export default function QuotationGenerator() {
   const [panelCategory, setPanelCategory] = useState("");
   const [inverterBrand, setInverterBrand] = useState("");
   const [batteryBrand, setBatteryBrand] = useState("");
+
+  const allowedInverterBrands = useMemo(
+    () => (systemType && plantLoadKw ? getAllowedInverterBrands(systemType, plantLoadKw) : []),
+    [systemType, plantLoadKw]
+  );
+
+  const resolvedInverterBrand = useMemo(
+    () => resolveInverterBrand(systemType, plantLoadKw, inverterBrand),
+    [systemType, plantLoadKw, inverterBrand]
+  );
 
   const showBatteryQuestion = systemType === "hybrid";
   const showBatteryBrand =
@@ -470,7 +477,7 @@ export default function QuotationGenerator() {
       wantsBattery: resolvedWantsBattery,
       panelCompany,
       panelCategory,
-      inverterBrand,
+      inverterBrand: resolvedInverterBrand,
       batteryBrand: showBatteryBrand ? batteryBrand : null,
     }),
     [
@@ -481,7 +488,7 @@ export default function QuotationGenerator() {
       resolvedWantsBattery,
       panelCompany,
       panelCategory,
-      inverterBrand,
+      resolvedInverterBrand,
       batteryBrand,
       showBatteryBrand,
       showFloorQuestion,
@@ -497,8 +504,14 @@ export default function QuotationGenerator() {
     setWantsBattery(null);
     setBatteryBrand("");
     setFloors(null);
-    if (type === "on-grid" || type === "hybrid") setInverterBrand("Invergy");
-    else setInverterBrand("");
+    setInverterBrand("");
+  }
+
+  function handlePlantLoadChange(kw) {
+    setPlantLoadKw(kw);
+    if (systemType === "off-grid" && kw > 4 && inverterBrand === "Microtek") {
+      setInverterBrand("");
+    }
   }
 
   function handleReset() {
@@ -576,7 +589,7 @@ export default function QuotationGenerator() {
                   <OptionCards
                     options={PLANT_LOAD_OPTIONS}
                     value={plantLoadKw}
-                    onChange={setPlantLoadKw}
+                    onChange={handlePlantLoadChange}
                     columns={4}
                     compact
                   />
@@ -685,23 +698,30 @@ export default function QuotationGenerator() {
                 <div className="border-t border-slate-100 pt-8">
                   <SectionTitle
                     step={nextStep()}
-                    title="Inverter"
+                    title="Inverter Brand"
                     subtitle={
-                      systemType === "off-grid"
-                        ? "Auto-selected — Microtek ≤4 kW, Invergy above"
-                        : "On-grid & hybrid use Invergy (auto-matched to load)"
+                      systemType === "off-grid" && plantLoadKw > 4
+                        ? "Invergy only above 4 kW off-grid"
+                        : systemType === "off-grid"
+                        ? "Microtek or Invergy — matched to your load"
+                        : "Invergy or Microtek — matched to your load"
                     }
                   />
-                  {systemType === "off-grid" ? (
+                  {allowedInverterBrands.length === 0 ? (
                     <p className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                      Inverter is chosen automatically for the lowest compatible price based on your plant load.
+                      Select plant load and system type first.
+                    </p>
+                  ) : allowedInverterBrands.length === 1 ? (
+                    <p className="text-sm text-slate-600 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+                      <span className="font-semibold text-orange-700">{allowedInverterBrands[0]}</span>
+                      {" — "}only option for this configuration (auto-applied).
                     </p>
                   ) : (
                     <OptionCards
-                      options={INVERTER_BRANDS.filter((b) => b === "Invergy")}
-                      value={inverterBrand || "Invergy"}
+                      options={allowedInverterBrands}
+                      value={inverterBrand}
                       onChange={setInverterBrand}
-                      columns={1}
+                      columns={2}
                       compact
                     />
                   )}
@@ -761,7 +781,7 @@ function isFormValid(selections) {
 
   if (systemNeedsWiring(systemType) && !floors) return false;
 
-  if (systemType !== "off-grid" && !inverterBrand) return false;
+  if (!inverterBrand) return false;
 
   if (systemType === "hybrid") {
     if (wantsBattery == null) return false;

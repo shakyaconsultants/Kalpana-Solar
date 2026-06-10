@@ -100,12 +100,6 @@ export const MICROTEK_BATTERIES_DISTRIBUTOR = {
     { size: "2560 WH", ah: 100, voltage: 25.6, priceExGst: 32000 },
     { size: "5120 WH", ah: 100, voltage: 51.2, priceExGst: 64000 },
   ],
-  leadAcid: [
-    { ah: 160, voltage: 12, warranty: "3yr", priceExGst: 12350 },
-    { ah: 150, voltage: 12, warranty: "5yr", priceExGst: 12950 },
-    { ah: 200, voltage: 12, warranty: "5yr", priceExGst: 16900 },
-    { ah: 220, voltage: 12, warranty: "5yr", priceExGst: 17500 },
-  ],
 };
 
 // ─── DC Wire (ex-GST) ──────────────────────────────────────────────────────

@@ -24,13 +24,12 @@ export const INSTALLATION = {
 
 export const CIVIL_WORK = {
   label: "Civil work",
-  pricePerKw: 500, // ₹500 per kW
+  pricePerKw: 400, // ₹400 per kW
 };
 
-/** Plant load / system capacity base charge */
-export const PLANT_LOAD = {
-  label: "Plant load",
-  pricePerKw: 4000, // ₹4,000 per kW
+export const INSTALLATION_MATERIAL = {
+  label: "Installation material",
+  amount: 14000,
 };
 
 export function getWiringRate(systemType) {
@@ -48,18 +47,13 @@ export function calculateWiringCost(systemType, floors) {
   return rate * floors;
 }
 
-export function calculatePlantLoadCost(plantKw) {
-  if (plantKw == null || plantKw <= 0) return null;
-  return Math.round(PLANT_LOAD.pricePerKw * plantKw);
-}
-
 export const MISCELLANEOUS = {
-  label: "Miscellaneous",
+  label: "Miscellaneous (saman)",
   amount: 5000,
 };
 
 export const EQUIPMENT = {
-  label: "Equipment",
+  label: "Miscellaneous (labour)",
   amount: 5000,
 };
 

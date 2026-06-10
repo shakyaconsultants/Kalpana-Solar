@@ -3,11 +3,10 @@
  */
 
 import {
-  calculatePlantLoadCost,
   calculateWiringCost,
-  WIRING,
   INSTALLATION,
   CIVIL_WORK,
+  INSTALLATION_MATERIAL,
   MISCELLANEOUS,
   EQUIPMENT,
   MARGIN_RATE,
@@ -41,11 +40,9 @@ export function isValidSelections(selections) {
 
   if (!resolveInverterBrand(systemType, plantLoadKw, inverterBrand)) return false;
 
-  if (systemType === "hybrid") {
+  if (systemType === "hybrid" || systemType === "off-grid") {
     if (wantsBattery == null) return false;
     if (wantsBattery && !batteryBrand) return false;
-  } else if (systemType === "on-grid" || systemType === "off-grid") {
-    if (!batteryBrand) return false;
   }
 
   return true;
@@ -84,19 +81,17 @@ export function calculateQuoteBreakdown(selections) {
   if (!inverter || error) return null;
   if (needsBattery(systemType, wantsBattery) && !battery) return null;
 
-  const plantLoad = calculatePlantLoadCost(plantLoadKw);
   const wiring = calculateWiringCost(systemType, floors);
-  const wiringRate = WIRING[systemType]?.pricePerFloor;
   const installation = calculateInstallationCost(panel.totalWatts);
   const civil = calculateCivilCost(plantLoadKw);
 
   const components = {
-    plantLoad,
     panels: panel.cost,
     inverter: inverter.cost,
     battery: battery?.cost ?? 0,
     wiring,
     installation,
+    installationMaterial: INSTALLATION_MATERIAL.amount,
     civil,
     miscellaneous: MISCELLANEOUS.amount,
     equipment: EQUIPMENT.amount,
@@ -122,15 +117,6 @@ export function calculateQuoteBreakdown(selections) {
           systemType === "off-grid"
             ? "Off-grid systems use Non-DCR panels"
             : "On-grid & hybrid systems use DCR panels",
-        wiring:
-          needsWiring(systemType) && wiringRate
-            ? {
-                floors,
-                ratePerFloor: wiringRate,
-                total: wiring,
-                summary: `${floors} floor${floors > 1 ? "s" : ""} × ₹${wiringRate.toLocaleString("en-IN")} = ₹${wiring.toLocaleString("en-IN")}`,
-              }
-            : null,
       },
       panel: {
         company: panelCompany,
@@ -177,10 +163,6 @@ export function calculateQuoteBreakdown(selections) {
             ? `${battery.voltage}V battery ↔ ${inverter.dcBusVoltage}V inverter — compatible`
             : battery
             ? "Battery selected for backup storage"
-            : null,
-        wiring:
-          needsWiring(systemType) && wiringRate
-            ? `On-grid ₹3,000/floor · Hybrid ₹5,000/floor — ${floors} floor(s) applied`
             : null,
       },
     },

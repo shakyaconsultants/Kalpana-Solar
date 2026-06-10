@@ -3,9 +3,9 @@
 export const INSTALLATION_TYPES = ["Residential", "Commercial"];
 
 export const SYSTEM_TYPES = [
-  { id: "on-grid", label: "On-Grid", desc: "Grid-tied with battery storage" },
+  { id: "on-grid", label: "On-Grid", desc: "Grid-tied, no battery backup" },
   { id: "hybrid", label: "Hybrid", desc: "Grid + optional battery backup" },
-  { id: "off-grid", label: "Off-Grid", desc: "Fully standalone with batteries" },
+  { id: "off-grid", label: "Off-Grid", desc: "Standalone — optional battery storage" },
 ];
 
 export const PANEL_COMPANIES = ["Adani", "Waaree", "Vikram"];
@@ -48,14 +48,11 @@ export function formatPlantLoad(kw) {
   return `${kw} kW`;
 }
 
-/** Floors for wiring cost — on-grid & hybrid only */
+/** Floors — on-grid & hybrid only */
 export const FLOOR_OPTIONS = [1, 2, 3, 4, 5].map((n) => ({
   id: n,
   label: n === 1 ? "1 floor (G)" : `${n} floors`,
-  desc:
-    n === 1
-      ? "Single floor / ground only"
-      : `Wiring across ${n} floor levels`,
+  desc: n === 1 ? "Single floor / ground only" : `${n}-storey building`,
 }));
 
 export function formatFloors(floors) {

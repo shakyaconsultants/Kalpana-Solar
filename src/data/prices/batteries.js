@@ -11,7 +11,6 @@ export const BATTERY_BRAND_IDS = {
 
 export const BATTERY_TYPES = {
   LITHIUM: "lithium",
-  LEAD: "lead",
 };
 
 /** Kalpana quote list — primary source for the quotation form */
@@ -78,28 +77,6 @@ export const BATTERY_PRICES = {
     ],
   },
 };
-
-/** Lead-acid batteries on same sheet — optional / off-grid use */
-export const LEAD_BATTERY_PRICES = [
-  {
-    id: "hytex-1.2kw",
-    company: "HYTEX",
-    type: BATTERY_TYPES.LEAD,
-    size: "1.2KW",
-    voltage: 12,
-    ah: 200,
-    price: 13000,
-  },
-  {
-    id: "luminous-1kw",
-    company: "LUMINOUS",
-    type: BATTERY_TYPES.LEAD,
-    size: "1KW",
-    voltage: 12,
-    ah: 150,
-    price: 13500,
-  },
-];
 
 export function getBatteryModels(brand) {
   const brandId = BATTERY_BRAND_IDS[brand];

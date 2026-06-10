@@ -1,24 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap");
 @import "tailwindcss";
 
 :root {
-  --solar-orange: #f97316;
-  --solar-amber: #f59e0b;
-  --solar-dark: #0f1623;
-  --solar-navy: #1a2744;
-  --solar-slate: #1e293b;
+  --brand-orange: #ea580c;
+  --brand-orange-light: #f97316;
+  --brand-dark: #0c1222;
+  --brand-navy: #151d32;
+  --brand-surface: #f8fafc;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; font-family: "Inter", system-ui, -apple-system, sans-serif; background: #fff; color: #1e293b; }
-
-.brand-gradient {
-  background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+* {
+  box-sizing: border-box;
 }
 
-.brand-gradient-text {
-  background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  background: #fff;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Layout utilities ─── */
+.section-padding {
+  @apply py-20 lg:py-24;
+}
+
+.container-main {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* ─── Buttons ─── */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-7 py-3.5 rounded-full transition-all duration-200 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 border border-white/25 text-white hover:bg-white/10 font-semibold px-7 py-3.5 rounded-full transition-all duration-200 backdrop-blur-sm;
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 border-2 border-slate-200 text-slate-700 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50/50 font-semibold px-6 py-3 rounded-full transition-all duration-200;
+}
+
+/* ─── Cards ─── */
+.card {
+  @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/5 hover:-translate-y-1 hover:border-orange-200/60;
+}
+
+/* ─── Hero background ─── */
+.hero-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(234, 88, 12, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 20% 80%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+    linear-gradient(160deg, #0c1222 0%, #151d32 45%, #0f1a12 100%);
+}
+
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ─── Form inputs (site-wide) ─── */
+.input-field {
+  @apply w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 bg-white placeholder:text-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all;
 }

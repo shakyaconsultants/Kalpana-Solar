@@ -3,7 +3,7 @@
  */
 
 import { getPanelConfigOptions, PANEL_GST_RATE } from "../data/prices/panels.js";
-import { BATTERY_PRICES, BATTERY_BRAND_IDS } from "../data/prices/batteries.js";
+import { BATTERY_PRICES, BATTERY_BRAND_IDS, BATTERY_TYPES } from "../data/prices/batteries.js";
 import {
   INVERGY_ONGRID,
   INVERGY_HYBRID_LV,
@@ -230,13 +230,16 @@ function pickInvergyOffGrid(plantKw) {
 export function selectBestInverter(systemType, plantKw, { withBattery = false, inverterBrand = "Invergy" } = {}) {
   const brand = inverterBrand === "Microtek" ? "Microtek" : "Invergy";
 
-  if (systemType === "on-grid" && !withBattery) {
+  if (
+    (systemType === "on-grid" || (systemType === "hybrid" && !withBattery)) &&
+    !withBattery
+  ) {
     return brand === "Microtek"
       ? pickMicrotekOnGrid(plantKw)
       : pickSmallestInvergyOnGrid(plantKw);
   }
 
-  if (systemType === "hybrid" || (systemType === "on-grid" && withBattery)) {
+  if (systemType === "hybrid" && withBattery) {
     return brand === "Microtek" ? pickMicrotekHybrid(plantKw) : pickInvergyHybrid(plantKw);
   }
 
@@ -250,14 +253,17 @@ export function selectBestInverter(systemType, plantKw, { withBattery = false, i
   return null;
 }
 
-/** Cheapest battery from brand that matches inverter DC bus voltage */
+/** Cheapest lithium battery from brand that matches inverter DC bus voltage */
 export function selectBestBattery(brand, dcBusVoltage, minEnergyKwh = 0) {
   if (!dcBusVoltage) return null;
 
   const brandId = BATTERY_BRAND_IDS[brand];
   if (!brandId) return null;
 
-  const models = BATTERY_PRICES[brandId]?.models ?? [];
+  const catalog = BATTERY_PRICES[brandId];
+  if (!catalog || catalog.chemistry !== BATTERY_TYPES.LITHIUM) return null;
+
+  const models = catalog.models ?? [];
   const bucket = dcBusVoltage;
 
   const compatible = models.filter((m) => getVoltageBucket(m.voltage) === bucket);
@@ -302,8 +308,8 @@ export function selectCheapestCompatibleBattery(dcBusVoltage, plantKw) {
 }
 
 export function needsBattery(systemType, wantsBattery) {
-  if (systemType === "off-grid" || systemType === "on-grid") return true;
-  if (systemType === "hybrid") return wantsBattery === true;
+  if (systemType === "on-grid") return false;
+  if (systemType === "hybrid" || systemType === "off-grid") return wantsBattery === true;
   return false;
 }
 

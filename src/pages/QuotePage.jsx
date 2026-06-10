@@ -8,44 +8,39 @@ export default function QuotePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-100/80">
-      {/* Page header */}
-      <div
-        className="pt-20 pb-8 sm:pb-10 border-b border-white/5"
-        style={{
-          background: "linear-gradient(135deg, #0f1623 0%, #1a2744 50%, #0f2010 100%)",
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50">
+      <div className="hero-bg relative overflow-hidden border-b border-white/5">
+        <div className="absolute inset-0 grid-pattern opacity-40" />
+        <div className="relative container-main pt-24 pb-10 lg:pt-28 lg:pb-12">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-slate-400 hover:text-orange-400 text-sm font-medium mb-5 transition-colors"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-orange-400 text-sm font-semibold mb-6 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back to Home
           </Link>
 
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-            <div>
-              <span className="inline-flex items-center gap-2 text-orange-400 font-semibold text-xs uppercase tracking-widest mb-2">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 text-orange-400 font-bold text-xs uppercase tracking-[0.15em] mb-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
                 Solar Quote Calculator
               </span>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
+              <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-white tracking-tight leading-tight">
                 Build Your System, See Your Price
               </h1>
-              <p className="text-slate-400 mt-2 max-w-xl text-sm sm:text-base">
-                Configure on the right — your estimated final price appears instantly on the left.
+              <p className="text-slate-400 mt-3 text-base leading-relaxed">
+                Configure your system on the right — your estimated final price updates instantly on the left. Download a PDF when ready.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3 text-xs">
-              {["GST Inclusive", "No Hidden Charges", "Free Site Survey"].map((tag) => (
+            <div className="flex flex-wrap gap-2">
+              {["GST Inclusive", "No Hidden Charges", "Free Site Survey", "PDF Download"].map((tag) => (
                 <span
                   key={tag}
-                  className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-300 font-medium"
+                  className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-300 text-xs font-semibold backdrop-blur-sm"
                 >
                   {tag}
                 </span>
@@ -55,9 +50,7 @@ export default function QuotePage() {
         </div>
       </div>
 
-      <div className="pt-8 sm:pt-10">
-        <QuotationGenerator />
-      </div>
+      <QuotationGenerator />
     </main>
   );
 }

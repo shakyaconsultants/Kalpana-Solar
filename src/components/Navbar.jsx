@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import Logo from "./ui/Logo";
 
 const links = [
   { label: "Home", href: "#home" },
@@ -19,7 +20,7 @@ export default function Navbar() {
   const navSolid = !isHome || scrolled;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 16);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -28,90 +29,122 @@ export default function Navbar() {
     setOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   function sectionHref(hash) {
     return isHome ? hash : `/${hash}`;
   }
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        navSolid ? "bg-white shadow-md" : "bg-transparent"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="white" className="w-5 h-5">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeWidth="2" stroke="white" strokeLinecap="round" />
-              </svg>
-            </div>
-            <span className={`font-bold text-lg leading-tight ${navSolid ? "text-slate-900" : "text-white"}`}>
-              Kalpana<br />
-              <span className="text-orange-500 text-sm font-semibold">Solar Traders</span>
-            </span>
-          </Link>
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          navSolid
+            ? "bg-white/95 backdrop-blur-md shadow-sm shadow-slate-900/5 border-b border-slate-100"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="container-main">
+          <div className="flex items-center justify-between h-16 lg:h-[4.25rem]">
+            <Logo imgClass={navSolid ? "h-9 sm:h-10" : "h-9 sm:h-11 brightness-0 invert"} />
 
-          <div className="hidden md:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-1">
+              {links.map((l) => (
+                <a
+                  key={l.href}
+                  href={sectionHref(l.href)}
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    navSolid
+                      ? "text-slate-600 hover:text-orange-600 hover:bg-orange-50"
+                      : "text-white/90 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {l.label}
+                </a>
+              ))}
+            </nav>
+
+            <div className="hidden lg:flex items-center gap-3">
+              <a
+                href={sectionHref("#contact")}
+                className={`text-sm font-semibold px-4 py-2 rounded-full transition-colors ${
+                  navSolid
+                    ? "text-slate-600 hover:text-orange-600"
+                    : "text-white/90 hover:text-white"
+                }`}
+              >
+                Contact
+              </a>
+              <Link
+                to="/quote"
+                className={`text-sm font-bold px-5 py-2.5 rounded-full transition-all shadow-lg ${
+                  isQuotePage
+                    ? "bg-orange-600 text-white shadow-orange-600/30"
+                    : "bg-orange-500 text-white hover:bg-orange-600 shadow-orange-500/30 hover:shadow-orange-500/40"
+                }`}
+              >
+                Get Quote
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              className={`lg:hidden p-2.5 rounded-xl transition-colors ${
+                navSolid ? "hover:bg-slate-100" : "hover:bg-white/10"
+              }`}
+              onClick={() => setOpen(!open)}
+              aria-label="Toggle menu"
+              aria-expanded={open}
+            >
+              <svg
+                className={`w-6 h-6 ${navSolid ? "text-slate-800" : "text-white"}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                {open ? (
+                  <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {open && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 bg-white border-b border-slate-100 shadow-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
             {links.map((l) => (
               <a
                 key={l.href}
                 href={sectionHref(l.href)}
-                className={`text-sm font-medium transition-colors hover:text-orange-500 ${
-                  navSolid ? "text-slate-700" : "text-white"
-                }`}
+                onClick={() => setOpen(false)}
+                className="block px-6 py-4 text-sm font-semibold text-slate-700 hover:bg-orange-50 hover:text-orange-600 border-b border-slate-50"
               >
                 {l.label}
               </a>
             ))}
-            <Link
-              to="/quote"
-              className={`text-sm font-semibold px-4 py-2 rounded-full transition-colors ${
-                isQuotePage
-                  ? "bg-orange-600 text-white"
-                  : "bg-orange-500 text-white hover:bg-orange-600"
-              }`}
-            >
-              Get Quote
-            </Link>
-          </div>
-
-          <button
-            className="md:hidden p-2"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
-          >
-            <div className={`w-5 h-0.5 mb-1 transition-all ${navSolid ? "bg-slate-800" : "bg-white"}`} />
-            <div className={`w-5 h-0.5 mb-1 transition-all ${navSolid ? "bg-slate-800" : "bg-white"}`} />
-            <div className={`w-5 h-0.5 transition-all ${navSolid ? "bg-slate-800" : "bg-white"}`} />
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={sectionHref(l.href)}
-              onClick={() => setOpen(false)}
-              className="block px-6 py-3 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-600 border-b border-gray-50"
-            >
-              {l.label}
-            </a>
-          ))}
-          <div className="px-6 py-4">
-            <Link
-              to="/quote"
-              onClick={() => setOpen(false)}
-              className="block text-center bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-orange-600"
-            >
-              Get Quote
-            </Link>
+            <div className="p-4 space-y-3">
+              <Link
+                to="/quote"
+                onClick={() => setOpen(false)}
+                className="block text-center btn-primary w-full py-3 text-sm"
+              >
+                Get Instant Quote
+              </Link>
+            </div>
           </div>
         </div>
       )}
-    </nav>
+    </>
   );
 }

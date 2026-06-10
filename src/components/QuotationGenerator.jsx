@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   INSTALLATION_TYPES,
@@ -16,6 +16,99 @@ import {
   getAllowedInverterBrands,
   resolveInverterBrand,
 } from "../data/quotationData";
+
+function FormDropdown({ value, onChange, options, placeholder = "Select an option" }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (rootRef.current && !rootRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selected = options.find((opt) => opt.id === value);
+  const displayLabel = selected?.label ?? placeholder;
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+        className={`w-full text-left rounded-xl border px-4 py-3.5 text-sm font-semibold transition-all flex items-center justify-between gap-3 ${
+          value != null
+            ? "border-orange-500 bg-orange-50 ring-1 ring-orange-500/20 text-orange-600"
+            : open
+            ? "border-orange-400 bg-white ring-1 ring-orange-400/20 text-slate-800"
+            : "border-slate-200 bg-white text-slate-500 hover:border-orange-300 hover:bg-orange-50/30"
+        }`}
+      >
+        <span>{displayLabel}</span>
+        <span className="flex items-center gap-2 shrink-0">
+          {value != null && (
+            <span className="w-3.5 h-3.5 rounded-full border-2 border-orange-500 bg-orange-500 flex items-center justify-center">
+              <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          )}
+          <svg
+            className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180 text-orange-500" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute z-30 mt-2 w-full max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 py-1.5"
+        >
+          {options.map((opt) => {
+            const isSelected = value === opt.id;
+            return (
+              <li key={opt.id} role="option" aria-selected={isSelected}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.id);
+                    setOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors flex items-center justify-between gap-2 ${
+                    isSelected
+                      ? "bg-orange-50 text-orange-600"
+                      : "text-slate-800 hover:bg-orange-50/40 hover:text-orange-600"
+                  }`}
+                >
+                  <span>{opt.label}</span>
+                  {isSelected && (
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-orange-500 bg-orange-500 flex items-center justify-center shrink-0">
+                      <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function SectionTitle({ step, title, subtitle }) {
   return (
@@ -152,33 +245,6 @@ function MatchedConfiguration({ matched }) {
       </div>
 
       <div className="px-3 py-2 space-y-3">
-        {/* Wiring / floors */}
-        {system?.wiring && (
-          <div>
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="w-5 h-5 rounded-md bg-purple-500/20 flex items-center justify-center text-purple-400 text-[10px] font-bold">
-                W
-              </span>
-              <span className="text-xs font-semibold text-slate-200">Wiring</span>
-            </div>
-            <div className="pl-6 space-y-0">
-              <ConfigMapRow
-                label="Building floors"
-                value={`${system.floors} floor${system.floors > 1 ? "s" : ""}`}
-              />
-              <ConfigMapRow
-                label="Rate"
-                value={
-                  system.systemType === "hybrid"
-                    ? "₹5,000 per floor (hybrid)"
-                    : "₹3,000 per floor (on-grid)"
-                }
-              />
-              <ConfigMapRow label="Wiring cost" value={system.wiring.summary} />
-            </div>
-          </div>
-        )}
-
         {/* Panels */}
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
@@ -232,7 +298,7 @@ function MatchedConfiguration({ matched }) {
                 )}
               </>
             ) : (
-              <ConfigMapRow label="Status" value="Not included in this configuration" hint="Hybrid without backup storage" />
+              <ConfigMapRow label="Status" value="Not included in this configuration" hint="Hybrid or off-grid without backup storage" />
             )}
           </div>
         </div>
@@ -245,24 +311,36 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
   const breakdown = formValid ? calculateQuoteBreakdown(selections) : null;
   const finalPrice = breakdown?.finalPrice ?? null;
   const matched = breakdown?.matched;
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  async function handleDownloadPdf() {
+    if (!breakdown?.finalPrice) return;
+    setPdfLoading(true);
+    try {
+      const { downloadQuotationPdf } = await import("../utils/generateQuotationPdf");
+      await downloadQuotationPdf({ selections, breakdown });
+    } finally {
+      setPdfLoading(false);
+    }
+  }
 
   const systemLabel = SYSTEM_TYPES.find((s) => s.id === selections.systemType)?.label;
   const panelCategoryLabel = PANEL_CATEGORIES.find((c) => c.id === selections.panelCategory)?.label;
 
-  const batterySummary =
-    selections.systemType === "hybrid"
-      ? selections.wantsBattery == null
-        ? null
-        : selections.wantsBattery
-        ? selections.batteryBrand || "Yes — select brand"
-        : "Not included"
-      : selections.batteryBrand || "Not selected";
+  const showBatteryConfig = selections.systemType === "hybrid" || selections.systemType === "off-grid";
 
-  const batteryDone =
-    selections.systemType === "hybrid"
-      ? selections.wantsBattery != null &&
-        (!selections.wantsBattery || !!selections.batteryBrand)
-      : !!selections.batteryBrand;
+  const batterySummary = !showBatteryConfig
+    ? null
+    : selections.wantsBattery == null
+    ? null
+    : selections.wantsBattery
+    ? selections.batteryBrand || "Yes — select brand"
+    : "Not included";
+
+  const batteryDone = !showBatteryConfig
+    ? true
+    : selections.wantsBattery != null &&
+      (!selections.wantsBattery || !!selections.batteryBrand);
 
   return (
     <div className="rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-800/50">
@@ -344,9 +422,7 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
             value={systemLabel || "Not selected"}
             done={!!selections.systemType}
           />
-          {(selections.systemType === "hybrid" ||
-            selections.systemType === "on-grid" ||
-            selections.systemType === "off-grid") && (
+          {showBatteryConfig && (
             <SummaryRow
               label="Battery"
               value={batterySummary || "Not selected"}
@@ -355,7 +431,7 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
           )}
           {systemNeedsWiring(selections.systemType) && (
             <SummaryRow
-              label="Floors (wiring)"
+              label="Building floors"
               value={selections.floors ? formatFloors(selections.floors) : "Not selected"}
               done={!!selections.floors}
             />
@@ -376,6 +452,20 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
             done={!!selections.inverterBrand}
           />
         </div>
+
+        {formValid && finalPrice != null && (
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={pdfLoading}
+            className="flex items-center justify-center gap-2 w-full mb-3 bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-bold py-3 rounded-xl transition-colors disabled:opacity-60"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            {pdfLoading ? "Generating PDF…" : "Download Quotation PDF"}
+          </button>
+        )}
 
         <Link
           to="/#contact"
@@ -454,19 +544,13 @@ export default function QuotationGenerator() {
     [systemType, plantLoadKw, inverterBrand]
   );
 
-  const showBatteryQuestion = systemType === "hybrid";
+  const showBatteryQuestion = systemType === "hybrid" || systemType === "off-grid";
   const showBatteryBrand =
-    systemType === "on-grid" ||
-    systemType === "off-grid" ||
-    (systemType === "hybrid" && wantsBattery === true);
+    (systemType === "hybrid" || systemType === "off-grid") && wantsBattery === true;
   const showFloorQuestion = systemType === "on-grid" || systemType === "hybrid";
 
   const resolvedWantsBattery =
-    systemType === "hybrid"
-      ? wantsBattery
-      : systemType === "on-grid" || systemType === "off-grid"
-      ? true
-      : null;
+    systemType === "hybrid" || systemType === "off-grid" ? wantsBattery : null;
 
   const selections = useMemo(
     () => ({
@@ -553,8 +637,8 @@ export default function QuotationGenerator() {
   );
 
   return (
-    <section className="pb-16 lg:pb-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="pb-16 lg:pb-24 pt-8 sm:pt-10">
+      <div className="container-main">
         {/* Mobile — price summary on top */}
         <aside className="lg:hidden mb-8">
           {pricePanel}
@@ -571,10 +655,10 @@ export default function QuotationGenerator() {
 
           {/* Configuration form */}
           <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-              <div className="px-6 sm:px-8 py-5 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="font-bold text-slate-900">Configure Your System</h2>
-                <p className="text-slate-500 text-sm mt-0.5">
+            <div className="card overflow-hidden shadow-sm">
+              <div className="px-6 sm:px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-orange-50/30">
+                <h2 className="font-extrabold text-slate-900 text-lg">Configure Your System</h2>
+                <p className="text-slate-500 text-sm mt-1">
                   Select each option — your price updates live on the left.
                 </p>
               </div>
@@ -584,14 +668,13 @@ export default function QuotationGenerator() {
                   <SectionTitle
                     step={nextStep()}
                     title="Plant Load"
-                    subtitle="Required system capacity"
+                    subtitle="Required system capacity (2 – 10 kW)"
                   />
-                  <OptionCards
-                    options={PLANT_LOAD_OPTIONS}
+                  <FormDropdown
                     value={plantLoadKw}
                     onChange={handlePlantLoadChange}
-                    columns={4}
-                    compact
+                    options={PLANT_LOAD_OPTIONS}
+                    placeholder="Select plant load (kW)"
                   />
                 </div>
 
@@ -629,11 +712,7 @@ export default function QuotationGenerator() {
                     <SectionTitle
                       step={nextStep()}
                       title="Building Floors"
-                      subtitle={
-                        systemType === "hybrid"
-                          ? "Wiring: ₹5,000 per floor"
-                          : "Wiring: ₹3,000 per floor"
-                      }
+                      subtitle="Number of floors at the installation site"
                     />
                     <OptionCards
                       options={FLOOR_OPTIONS}
@@ -650,7 +729,11 @@ export default function QuotationGenerator() {
                     <SectionTitle
                       step={nextStep()}
                       title="Battery Backup"
-                      subtitle="Add storage for power cuts"
+                      subtitle={
+                        systemType === "off-grid"
+                          ? "Optional storage for standalone systems"
+                          : "Add storage for power cuts"
+                      }
                     />
                     <YesNoToggle
                       value={wantsBattery}
@@ -783,11 +866,9 @@ function isFormValid(selections) {
 
   if (!inverterBrand) return false;
 
-  if (systemType === "hybrid") {
+  if (systemType === "hybrid" || systemType === "off-grid") {
     if (wantsBattery == null) return false;
     if (wantsBattery && !batteryBrand) return false;
-  } else if (systemType === "on-grid" || systemType === "off-grid") {
-    if (!batteryBrand) return false;
   }
 
   return true;

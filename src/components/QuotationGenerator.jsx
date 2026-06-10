@@ -18,7 +18,12 @@ import {
 import QuoteWizardHeader from "./quote/QuoteWizardHeader";
 import CustomerStep from "./quote/CustomerStep";
 import PreviewStep from "./quote/PreviewStep";
-import { createQuoteReference, downloadPdfBlob, prepareQuotationPdfBlob } from "../utils/generateQuotationPdf";
+import {
+  PDF_CAPTURE_VERSION,
+  createQuoteReference,
+  downloadPdfBlob,
+  prepareQuotationPdfBlob,
+} from "../utils/generateQuotationPdf";
 
 function FormDropdown({ value, onChange, options, placeholder = "Select an option" }) {
   const [open, setOpen] = useState(false);
@@ -661,7 +666,7 @@ export default function QuotationGenerator() {
     if (!breakdown?.finalPrice || pdfSaving) return;
 
     const cached = pdfCacheRef.current;
-    if (cached) {
+    if (cached?.captureVersion === PDF_CAPTURE_VERSION) {
       downloadPdfBlob(cached.blob, cached.filename);
       return;
     }

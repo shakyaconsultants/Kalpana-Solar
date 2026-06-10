@@ -12,14 +12,16 @@ export default function Logo({ variant = "on-light", className = "" }) {
 
   const wrapCls =
     variant === "footer"
-      ? "inline-flex items-center rounded-xl overflow-hidden"
+      ? "inline-flex items-center justify-center rounded-2xl bg-white px-3 py-2 shadow-lg shadow-black/20 ring-1 ring-white/10"
       : isDarkSurface
-      ? "inline-flex items-center rounded-xl overflow-hidden ring-1 ring-white/10"
+      ? "inline-flex items-center justify-center rounded-2xl bg-white/95 px-2.5 py-1.5 shadow-lg shadow-kalpana-950/25 ring-1 ring-white/20 backdrop-blur-sm"
       : "inline-flex items-center";
 
   const imgCls =
     variant === "footer"
-      ? "h-8 w-auto max-h-8 object-contain"
+      ? "h-12 w-auto max-w-[132px] object-contain"
+      : isDarkSurface
+      ? "h-9 sm:h-10 w-auto max-w-[118px] object-contain"
       : "h-9 sm:h-10 w-auto max-w-[148px] object-contain object-left";
 
   return (

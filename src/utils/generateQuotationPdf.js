@@ -4,6 +4,7 @@ import { jsPDF } from "jspdf";
 /** A4 at 96 CSS dpi — matches 210mm × 297mm */
 export const A4_PX_WIDTH = 794;
 export const A4_PX_HEIGHT = 1123;
+export const PDF_CAPTURE_VERSION = 2;
 
 export function createQuoteReference() {
   const d = new Date();
@@ -44,6 +45,44 @@ async function waitForImages(root) {
           img.addEventListener("error", resolve, { once: true });
         })
     )
+  );
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function imageSrcToDataUrl(src) {
+  const absoluteUrl = new URL(src, window.location.href).href;
+  const response = await fetch(absoluteUrl, { cache: "no-cache" });
+  if (!response.ok) {
+    throw new Error(`Unable to load image for PDF: ${absoluteUrl}`);
+  }
+  return blobToDataUrl(await response.blob());
+}
+
+async function inlineImagesAsDataUrls(sourceRoot, cloneRoot) {
+  const sourceImages = [...sourceRoot.querySelectorAll("img")];
+  const cloneImages = [...cloneRoot.querySelectorAll("img")];
+
+  await Promise.all(
+    cloneImages.map(async (cloneImg, index) => {
+      const sourceImg = sourceImages[index];
+      const src = sourceImg?.currentSrc || sourceImg?.src || cloneImg.currentSrc || cloneImg.src;
+      if (!src || src.startsWith("data:")) return;
+
+      try {
+        cloneImg.src = await imageSrcToDataUrl(src);
+      } catch {
+        // Keep the original URL as a fallback; waitForImages will still let capture continue.
+        cloneImg.src = src;
+      }
+    })
   );
 }
 
@@ -177,7 +216,7 @@ function injectCaptureFonts(doc) {
 async function capturePageToCanvas(pageEl, pageIndex) {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
-  iframe.style.cssText = `position:fixed;left:-15000px;top:0;width:${A4_PX_WIDTH}px;height:${A4_PX_HEIGHT}px;border:0;visibility:hidden;`;
+  iframe.style.cssText = `position:fixed;left:-15000px;top:0;width:${A4_PX_WIDTH}px;height:${A4_PX_HEIGHT}px;border:0;opacity:0;pointer-events:none;`;
   document.body.appendChild(iframe);
 
   const iframeDoc = iframe.contentDocument;
@@ -195,6 +234,8 @@ async function capturePageToCanvas(pageEl, pageIndex) {
   injectCaptureFonts(iframeDoc);
 
   const clone = pageEl.cloneNode(true);
+  await inlineImagesAsDataUrls(pageEl, clone);
+
   clone.style.setProperty("width", `${A4_PX_WIDTH}px`, "important");
   clone.style.setProperty("height", `${A4_PX_HEIGHT}px`, "important");
   clone.style.setProperty("max-height", `${A4_PX_HEIGHT}px`, "important");
@@ -207,13 +248,13 @@ async function capturePageToCanvas(pageEl, pageIndex) {
   inlineTreeStyles(pageEl, clone);
   stripClassNames(clone);
 
-  clone.querySelectorAll("img").forEach((img) => {
-    if (img.src) img.src = img.src;
-  });
-
   iframeDoc.body.appendChild(clone);
   await waitForImages(clone);
   await waitForPreviewReady();
+
+  const captureHeight = Math.ceil(
+    Math.max(A4_PX_HEIGHT, clone.scrollHeight, clone.getBoundingClientRect().height)
+  );
 
   try {
     return await withTimeout(
@@ -224,9 +265,9 @@ async function capturePageToCanvas(pageEl, pageIndex) {
         logging: false,
         backgroundColor: "#ffffff",
         width: A4_PX_WIDTH,
-        height: A4_PX_HEIGHT,
+        height: captureHeight,
         windowWidth: A4_PX_WIDTH,
-        windowHeight: A4_PX_HEIGHT,
+        windowHeight: captureHeight,
         scrollX: 0,
         scrollY: 0,
         foreignObjectRendering: false,
@@ -267,8 +308,8 @@ async function capturePreviewToPdf(filename) {
         throw new Error(`Failed to capture page ${i + 1}.`);
       }
 
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      doc.addImage(imgData, "JPEG", 0, 0, pageW, pageH);
+      const imgData = canvas.toDataURL("image/png");
+      doc.addImage(imgData, "PNG", 0, 0, pageW, pageH);
     }
   } finally {
     root.classList.remove("quote-pdf-capture-mode");
@@ -291,7 +332,7 @@ export function downloadPdfBlob(blob, filename) {
 
 export async function prepareQuotationPdfBlob(params) {
   const { doc, filename, quoteRef } = await buildQuotationPdf(params);
-  return { blob: doc.output("blob"), filename, quoteRef };
+  return { blob: doc.output("blob"), filename, quoteRef, captureVersion: PDF_CAPTURE_VERSION };
 }
 
 export async function buildQuotationPdf({

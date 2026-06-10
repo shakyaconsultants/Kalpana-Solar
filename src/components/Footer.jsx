@@ -25,7 +25,7 @@ export default function Footer() {
             <p className="text-white font-semibold text-sm mb-3">Services</p>
             <ul className="space-y-2 text-sm">
               {["Rooftop On-Grid Solar", "Off-Grid Solar", "Hybrid Solar", "Residential Solar", "Commercial Solar", "Solar Water Pump"].map(s => (
-                <li key={s}><a href="#services" className="hover:text-orange-400 transition-colors">{s}</a></li>
+                <li key={s}><a href="/#services" className="hover:text-orange-400 transition-colors">{s}</a></li>
               ))}
             </ul>
           </div>
@@ -34,7 +34,7 @@ export default function Footer() {
             <p className="text-white font-semibold text-sm mb-3">Products</p>
             <ul className="space-y-2 text-sm">
               {["Solar Panels (Mono PERC)", "Bifacial Panels", "String Inverters", "Hybrid Inverters", "LFP Batteries", "Tall Tubular Batteries"].map(p => (
-                <li key={p}><a href="#products" className="hover:text-orange-400 transition-colors">{p}</a></li>
+                <li key={p}><a href="/#products" className="hover:text-orange-400 transition-colors">{p}</a></li>
               ))}
             </ul>
           </div>

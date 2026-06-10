@@ -45,7 +45,7 @@ export default function Footer() {
       <div className="container-main py-14">
         <div className="grid sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           <div className="lg:col-span-4">
-            <Logo imgClass="h-10 brightness-0 invert opacity-90" />
+            <Logo variant="footer" />
             <p className="text-sm leading-relaxed mt-4 max-w-xs">
               Authorised wholesale distributor and installation partner for complete rooftop solar solutions across India.
             </p>

@@ -112,14 +112,14 @@ function FormDropdown({ value, onChange, options, placeholder = "Select an optio
 
 function SectionTitle({ step, title, subtitle }) {
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2.5">
-        <span className="w-7 h-7 rounded-lg bg-orange-500 text-white text-xs font-bold flex items-center justify-center shrink-0">
+    <div className="mb-5">
+      <div className="flex items-start gap-3">
+        <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/30">
           {step}
         </span>
-        <div>
-          <h3 className="font-bold text-slate-800 text-sm">{title}</h3>
-          {subtitle && <p className="text-slate-500 text-xs mt-0.5">{subtitle}</p>}
+        <div className="pt-0.5">
+          <h3 className="font-bold text-slate-900 text-base tracking-tight">{title}</h3>
+          {subtitle && <p className="text-slate-500 text-sm mt-1 leading-snug">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -238,10 +238,10 @@ function MatchedConfiguration({ matched }) {
   const { system, panel, inverter, battery, compatibility } = matched;
 
   return (
-    <div className="rounded-xl border border-orange-500/25 bg-orange-950/20 mb-4 overflow-hidden">
-      <div className="px-3 py-2.5 bg-orange-500/10 border-b border-orange-500/20">
-        <p className="text-orange-400 font-semibold text-xs">Recommended system mapping</p>
-        <p className="text-[10px] text-slate-400 mt-0.5">Lowest-cost compatible configuration</p>
+    <div className="rounded-2xl border border-orange-500/20 bg-white/[0.03] mb-4 overflow-hidden backdrop-blur-sm">
+      <div className="px-4 py-3 bg-gradient-to-r from-orange-500/15 to-transparent border-b border-orange-500/15">
+        <p className="text-orange-300 font-bold text-xs uppercase tracking-wider">Recommended system</p>
+        <p className="text-slate-400 text-[11px] mt-0.5">Lowest-cost compatible configuration</p>
       </div>
 
       <div className="px-3 py-2 space-y-3">
@@ -312,13 +312,17 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
   const finalPrice = breakdown?.finalPrice ?? null;
   const matched = breakdown?.matched;
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
 
-  async function handleDownloadPdf() {
+  async function handlePreviewPdf() {
     if (!breakdown?.finalPrice) return;
     setPdfLoading(true);
+    setPdfError(false);
     try {
-      const { downloadQuotationPdf } = await import("../utils/generateQuotationPdf");
-      await downloadQuotationPdf({ selections, breakdown });
+      const { previewQuotationPdf } = await import("../utils/generateQuotationPdf");
+      await previewQuotationPdf({ selections, breakdown });
+    } catch {
+      setPdfError(true);
     } finally {
       setPdfLoading(false);
     }
@@ -343,46 +347,39 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
       (!selections.wantsBattery || !!selections.batteryBrand);
 
   return (
-    <div className="rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-800/50">
-      <div
-        className="p-5 rounded-2xl"
-        style={{ background: "linear-gradient(160deg, #0f1623 0%, #1a2744 55%, #142010 100%)" }}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="white" className="w-4 h-4">
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2" strokeWidth="2" stroke="white" strokeLinecap="round" />
-            </svg>
-          </div>
+    <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/20 ring-1 ring-white/10">
+      <div className="absolute inset-0 hero-bg" />
+      <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
+
+      <div className="relative p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-3 mb-5">
           <div>
-            <p className="text-white font-bold text-sm">Your Quote Summary</p>
-            <p className="text-slate-400 text-xs">Updates as you configure</p>
+            <p className="text-white font-extrabold text-base tracking-tight">Quote Summary</p>
+            <p className="text-slate-400 text-xs mt-0.5">Live estimate as you configure</p>
           </div>
+          <span className="text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded-full">
+            {progress}%
+          </span>
         </div>
 
-        {/* Progress */}
-        <div className="mb-4">
-          <div className="flex justify-between text-xs mb-2">
-            <span className="text-slate-400">Configuration progress</span>
-            <span className="text-orange-400 font-semibold">{progress}%</span>
-          </div>
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="mb-5">
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
-        {/* Price hero */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4 mb-4 text-center">
-          <p className="text-slate-400 text-xs uppercase tracking-widest font-medium mb-2">
+        <div className="rounded-2xl bg-white/[0.06] border border-white/10 p-5 mb-5 text-center backdrop-blur-sm">
+          <p className="text-slate-400 text-[11px] uppercase tracking-[0.15em] font-semibold mb-2">
             Estimated Final Price
           </p>
           {formValid ? (
             finalPrice != null ? (
-              <p className="text-4xl font-extrabold text-white tracking-tight">{formatINR(finalPrice)}</p>
+              <p className="text-4xl sm:text-[2.75rem] font-extrabold text-white tracking-tight leading-none">
+                {formatINR(finalPrice)}
+              </p>
             ) : (
               <div>
                 <p className="text-2xl font-bold text-slate-300">—</p>
@@ -397,16 +394,16 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
               <p className="text-slate-400 text-xs mt-2">Complete the form to see your price</p>
             </div>
           )}
-          <p className="text-slate-500 text-[10px] mt-3 uppercase tracking-wide">
-            inclusive of GST where applicable
+          <p className="text-slate-500 text-[10px] mt-3 uppercase tracking-wide font-medium">
+            Inclusive of GST where applicable
           </p>
         </div>
 
         {matched && <MatchedConfiguration matched={matched} />}
 
         {/* Your selections */}
-        <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2 px-0.5">Your selections</p>
-        <div className="rounded-xl bg-black/20 border border-white/5 px-3 py-0.5 mb-4">
+        <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2 px-0.5 font-semibold">Your selections</p>
+        <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-0.5 mb-4 backdrop-blur-sm">
           <SummaryRow
             label="Plant load"
             value={selections.plantLoadKw ? formatPlantLoad(selections.plantLoadKw) : "Not selected"}
@@ -454,22 +451,27 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
         </div>
 
         {formValid && finalPrice != null && (
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={pdfLoading}
-            className="flex items-center justify-center gap-2 w-full mb-3 bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-bold py-3 rounded-xl transition-colors disabled:opacity-60"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-            {pdfLoading ? "Generating PDF…" : "Download Quotation PDF"}
-          </button>
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={handlePreviewPdf}
+              disabled={pdfLoading}
+              className="flex items-center justify-center gap-2 w-full bg-white text-slate-900 hover:bg-orange-50 text-sm font-bold py-3.5 rounded-xl transition-all disabled:opacity-60 shadow-lg shadow-black/10"
+            >
+              <svg className="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M14 3h7v7M10 14L21 3M5 12v7a2 2 0 0 0 2 2h7" />
+              </svg>
+              {pdfLoading ? "Generating…" : "Get PDF"}
+            </button>
+            {pdfError && (
+              <p className="text-amber-300/90 text-[10px] text-center mt-2">Unable to generate PDF.</p>
+            )}
+          </div>
         )}
 
         <Link
           to="/#contact"
-          className="flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-3 rounded-xl transition-colors"
+          className="flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-orange-500/25"
         >
           Request Detailed Proposal
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -481,11 +483,22 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
           <button
             type="button"
             onClick={onReset}
-            className="w-full mt-3 text-slate-400 hover:text-white text-xs font-medium py-2 transition-colors"
+            className="w-full mt-3 text-slate-500 hover:text-white text-xs font-semibold py-2 transition-colors"
           >
             Reset configuration
           </button>
         )}
+
+        <div className="flex items-start gap-3 mt-5 pt-4 border-t border-white/10">
+          <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center shrink-0">
+            <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <p className="text-slate-400 text-[11px] leading-relaxed">
+            All prices are indicative. A free site survey confirms final sizing, structure, and subsidy eligibility.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -623,26 +636,30 @@ export default function QuotationGenerator() {
     />
   );
 
-  const trustNote = (
-    <div className="flex items-start gap-3 mt-4 px-1">
-      <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-        <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-      </div>
-      <p className="text-slate-500 text-xs leading-relaxed">
-        All prices are indicative. A free site survey confirms final sizing, structure, and subsidy eligibility.
-      </p>
-    </div>
-  );
-
   return (
     <section className="pb-16 lg:pb-24 pt-8 sm:pt-10">
       <div className="container-main">
+        {/* Steps hint — desktop */}
+        <div className="hidden lg:grid grid-cols-3 gap-4 mb-8">
+          {[
+            { n: "1", t: "Configure", d: "Select load, system type & equipment" },
+            { n: "2", t: "Review price", d: "Live estimate in the summary panel" },
+            { n: "3", t: "Get PDF", d: "Export your quotation" },
+          ].map((s) => (
+            <div key={s.n} className="card px-4 py-3 flex items-start gap-3">
+              <span className="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 text-xs font-bold flex items-center justify-center shrink-0">
+                {s.n}
+              </span>
+              <div>
+                <p className="font-bold text-slate-900 text-sm">{s.t}</p>
+                <p className="text-slate-500 text-xs mt-0.5">{s.d}</p>
+              </div>
+            </div>
+          ))}
+        </div>
         {/* Mobile — price summary on top */}
         <aside className="lg:hidden mb-8">
           {pricePanel}
-          {trustNote}
         </aside>
 
         <div className="lg:flex lg:gap-10 lg:items-stretch">
@@ -650,20 +667,19 @@ export default function QuotationGenerator() {
             <div className="sticky top-24">
               {pricePanel}
             </div>
-            {trustNote}
           </aside>
 
           {/* Configuration form */}
           <div className="flex-1 min-w-0">
-            <div className="card overflow-hidden shadow-sm">
-              <div className="px-6 sm:px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-orange-50/30">
-                <h2 className="font-extrabold text-slate-900 text-lg">Configure Your System</h2>
+            <div className="card overflow-hidden shadow-md ring-1 ring-slate-200/80">
+              <div className="px-6 sm:px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-orange-50/40">
+                <h2 className="font-extrabold text-slate-900 text-lg tracking-tight">Configure Your System</h2>
                 <p className="text-slate-500 text-sm mt-1">
                   Select each option — your price updates live on the left.
                 </p>
               </div>
 
-              <div className="p-6 sm:p-8 space-y-8">
+              <div className="p-6 sm:p-8 space-y-10">
                 <div>
                   <SectionTitle
                     step={nextStep()}

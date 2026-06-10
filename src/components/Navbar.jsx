@@ -50,10 +50,10 @@ export default function Navbar() {
         }`}
       >
         <div className="container-main">
-          <div className="flex items-center justify-between h-16 lg:h-[4.25rem]">
-            <Logo imgClass={navSolid ? "h-9 sm:h-10" : "h-9 sm:h-11 brightness-0 invert"} />
+          <div className="flex items-center h-16 lg:h-[4.25rem] gap-4">
+            <Logo variant={navSolid ? "on-light" : "on-dark"} />
 
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex flex-1 items-center justify-center gap-0.5">
               {links.map((l) => (
                 <a
                   key={l.href}
@@ -69,17 +69,7 @@ export default function Navbar() {
               ))}
             </nav>
 
-            <div className="hidden lg:flex items-center gap-3">
-              <a
-                href={sectionHref("#contact")}
-                className={`text-sm font-semibold px-4 py-2 rounded-full transition-colors ${
-                  navSolid
-                    ? "text-slate-600 hover:text-orange-600"
-                    : "text-white/90 hover:text-white"
-                }`}
-              >
-                Contact
-              </a>
+            <div className="hidden lg:flex items-center shrink-0">
               <Link
                 to="/quote"
                 className={`text-sm font-bold px-5 py-2.5 rounded-full transition-all shadow-lg ${
@@ -94,7 +84,7 @@ export default function Navbar() {
 
             <button
               type="button"
-              className={`lg:hidden p-2.5 rounded-xl transition-colors ${
+              className={`lg:hidden ml-auto p-2.5 rounded-xl transition-colors ${
                 navSolid ? "hover:bg-slate-100" : "hover:bg-white/10"
               }`}
               onClick={() => setOpen(!open)}

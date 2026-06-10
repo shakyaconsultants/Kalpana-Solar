@@ -76,9 +76,9 @@ export default function WhyUs() {
           {reasons.map((r) => (
             <div
               key={r.title}
-              className="bg-white/[0.04] backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/[0.07] hover:border-orange-500/30 transition-all duration-300"
+              className="bg-white/[0.04] backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/[0.07] hover:border-kalpana-500/30 transition-all duration-300"
             >
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center mb-4">
+              <div className="w-10 h-10 rounded-xl bg-kalpana-500/20 text-kalpana-400 flex items-center justify-center mb-4">
                 {r.icon}
               </div>
               <h3 className="text-white font-bold mb-2">{r.title}</h3>

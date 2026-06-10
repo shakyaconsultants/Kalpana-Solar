@@ -1,11 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap");
 @import "tailwindcss";
+@import "./styles/brand.css";
+@import "./styles/quotation-preview.css";
 
 :root {
-  --brand-orange: #ea580c;
-  --brand-orange-light: #f97316;
+  --brand-primary: #3b7ce8;
+  --brand-primary-hover: #2563d4;
+  --brand-secondary: #6366f1;
   --brand-dark: #0c1222;
-  --brand-navy: #151d32;
+  --brand-navy: #121a2e;
   --brand-surface: #f8fafc;
 }
 
@@ -37,7 +40,14 @@ body {
 
 /* ─── Buttons ─── */
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-7 py-3.5 rounded-full transition-all duration-200 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5;
+  @apply inline-flex items-center justify-center gap-2 text-white font-bold px-7 py-3.5 rounded-full transition-all duration-200 hover:-translate-y-0.5;
+  background: var(--brand-gradient);
+  box-shadow: var(--brand-shadow);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 14px 44px -10px rgba(99, 102, 241, 0.55);
 }
 
 .btn-secondary {
@@ -45,24 +55,86 @@ body {
 }
 
 .btn-outline {
-  @apply inline-flex items-center justify-center gap-2 border-2 border-slate-200 text-slate-700 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50/50 font-semibold px-6 py-3 rounded-full transition-all duration-200;
+  @apply inline-flex items-center justify-center gap-2 border-2 border-slate-200 text-slate-700 font-semibold px-6 py-3 rounded-full transition-all duration-200;
 }
 
-/* ─── Cards ─── */
+.btn-outline:hover {
+  border-color: #93b8fd;
+  color: #2563d4;
+  background: #eef4ff;
+}
+
 .card {
   @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm;
 }
 
 .card-hover {
-  @apply transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/5 hover:-translate-y-1 hover:border-orange-200/60;
+  @apply transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/5 hover:-translate-y-1;
 }
 
-/* ─── Hero background ─── */
+.card-hover:hover {
+  border-color: rgba(59, 124, 232, 0.35);
+}
+
+.quote-wizard-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.08) 0%, transparent 55%),
+    linear-gradient(180deg, #f1f5f9 0%, #eef4ff 40%, #f8fafc 100%);
+}
+
+.quote-wizard-card {
+  @apply bg-white rounded-3xl p-6 sm:p-10;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+.quote-wizard-btn-primary {
+  @apply inline-flex items-center justify-center gap-2 text-white font-bold px-6 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5;
+  background: var(--brand-gradient);
+  box-shadow: 0 4px 20px rgba(59, 124, 232, 0.35);
+}
+
+.quote-wizard-btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.quote-wizard-btn-outline {
+  @apply inline-flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-700 font-semibold px-4 py-2.5 rounded-xl transition-all duration-200;
+}
+
+.quote-wizard-btn-outline:hover {
+  border-color: #93b8fd;
+  color: #2563d4;
+  background: #eef4ff;
+}
+
+.quote-wizard-btn-back {
+  @apply inline-flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white text-slate-600 transition-all shrink-0;
+}
+
+.quote-wizard-btn-back:hover {
+  border-color: #93b8fd;
+  color: #2563d4;
+  background: #eef4ff;
+}
+
 .hero-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(234, 88, 12, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 20% 80%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
-    linear-gradient(160deg, #0c1222 0%, #151d32 45%, #0f1a12 100%);
+    radial-gradient(ellipse 70% 55% at 75% 15%, rgba(59, 124, 232, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 15% 85%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(124, 58, 237, 0.08) 0%, transparent 60%),
+    linear-gradient(165deg, #0a0f1c 0%, #121a32 42%, #151038 100%);
+}
+
+.input-field {
+  @apply w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 bg-white placeholder:text-slate-400 transition-all;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #3b7ce8;
+  box-shadow: 0 0 0 3px rgba(59, 124, 232, 0.15);
 }
 
 .grid-pattern {
@@ -72,7 +144,38 @@ body {
   background-size: 48px 48px;
 }
 
-/* ─── Form inputs (site-wide) ─── */
-.input-field {
-  @apply w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 bg-white placeholder:text-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all;
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #quote-preview-document,
+  #quote-preview-document * {
+    visibility: visible;
+  }
+
+  #quote-preview-document {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    background: white;
+    padding: 0;
+  }
+
+  .quote-preview-page {
+    box-shadow: none;
+    page-break-after: always;
+    max-width: none;
+    min-height: auto;
+  }
+
+  .quote-preview-stack {
+    border: none;
+    padding: 0;
+    gap: 0;
+  }
 }
+
+/* ─── Form inputs (site-wide) ─── */

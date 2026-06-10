@@ -12,8 +12,8 @@ export default function Hero() {
   return (
     <section id="home" className="relative min-h-[92vh] lg:min-h-screen flex items-center hero-bg overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-60" />
-      <div className="absolute top-20 right-0 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-20 right-0 w-[600px] h-[600px] bg-kalpana-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative container-main pt-28 pb-24 lg:pt-32 lg:pb-28">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -22,9 +22,9 @@ export default function Hero() {
               {badges.map((b) => (
                 <span
                   key={b}
-                  className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 text-orange-300 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full backdrop-blur-sm"
+                  className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 text-kalpana-200 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full backdrop-blur-sm"
                 >
-                  <span className="w-1 h-1 rounded-full bg-orange-400" />
+                  <span className="w-1 h-1 rounded-full bg-accent-400" />
                   {b}
                 </span>
               ))}
@@ -32,7 +32,7 @@ export default function Hero() {
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.1] tracking-tight mb-5">
               Trusted Solar Partner for{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">
+              <span className="brand-gradient-text">
                 Homes & Businesses
               </span>
             </h1>
@@ -66,17 +66,17 @@ export default function Hero() {
 
           <div className="hidden lg:block relative">
             <div className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 shadow-2xl shadow-black/20">
-              <div className="absolute -top-3 -right-3 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+              <div className="absolute -top-3 -right-3 brand-gradient-bg text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                 Live Quote Tool
               </div>
 
-              <p className="text-orange-400 text-xs font-bold uppercase tracking-widest mb-2">System types</p>
+              <p className="text-kalpana-400 text-xs font-bold uppercase tracking-widest mb-2">System types</p>
               <h3 className="text-white text-xl font-bold mb-6">Configure & download your quote in minutes</h3>
 
               <div className="space-y-3 mb-6">
                 {[
-                  { name: "On-Grid", desc: "Grid-tied · Net metering", color: "bg-emerald-500" },
-                  { name: "Hybrid", desc: "Grid + battery backup", color: "bg-orange-500" },
+                  { name: "On-Grid", desc: "Grid-tied · Net metering", color: "bg-kalpana-500" },
+                  { name: "Hybrid", desc: "Grid + battery backup", color: "bg-accent-500" },
                   { name: "Off-Grid", desc: "Fully standalone power", color: "bg-blue-500" },
                 ].map((item) => (
                   <div
@@ -94,7 +94,7 @@ export default function Hero() {
 
               <Link
                 to="/quote"
-                className="flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-colors text-sm"
+                className="flex items-center justify-center gap-2 w-full brand-gradient-bg hover:brightness-105 text-white font-bold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-kalpana-500/25"
               >
                 Start Configuration
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

@@ -10,7 +10,7 @@ const services = [
     ),
     title: "Rooftop On-Grid Solar",
     tag: "Grid-Tied",
-    tagColor: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+    tagColor: "bg-kalpana-50 text-kalpana-700 ring-kalpana-600/20",
     desc: "Connect to the utility grid, export surplus power, and slash electricity bills — no batteries required.",
     detail: "Ideal for homes & offices with reliable grid supply.",
   },
@@ -35,7 +35,7 @@ const services = [
     ),
     title: "Hybrid Solar",
     tag: "Smart Backup",
-    tagColor: "bg-amber-50 text-amber-700 ring-amber-600/20",
+    tagColor: "bg-accent-50 text-accent-700 ring-accent-600/20",
     desc: "Stay grid-connected with optional battery backup — power through outages while exporting excess energy.",
     detail: "Ideal for urban homes with power cuts.",
   },
@@ -61,7 +61,7 @@ const services = [
     ),
     title: "Commercial Solar",
     tag: "Industrial",
-    tagColor: "bg-orange-50 text-orange-700 ring-orange-600/20",
+    tagColor: "bg-kalpana-50 text-kalpana-700 ring-kalpana-600/20",
     desc: "Large-scale systems for factories, warehouses, and institutions — typically 3–4 year ROI on energy savings.",
     detail: "20 kW to 1 MW+ capacity.",
   },
@@ -95,7 +95,7 @@ export default function Services() {
               key={s.title}
               className="card card-hover p-6 lg:p-7 group"
             >
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-50 to-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mb-5 group-hover:from-orange-500 group-hover:to-orange-600 group-hover:text-white transition-all duration-300 shadow-sm">
+              <div className="w-12 h-12 bg-gradient-to-br from-kalpana-50 to-kalpana-100 text-kalpana-600 rounded-2xl flex items-center justify-center mb-5 group-hover:from-kalpana-500 group-hover:to-kalpana-600 group-hover:text-white transition-all duration-300 shadow-sm">
                 {s.icon}
               </div>
               <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -105,7 +105,7 @@ export default function Services() {
                 </span>
               </div>
               <p className="text-slate-600 text-sm leading-relaxed">{s.desc}</p>
-              <p className="text-orange-600 text-xs font-semibold mt-4 flex items-center gap-1">
+              <p className="text-kalpana-600 text-xs font-semibold mt-4 flex items-center gap-1">
                 {s.detail}
                 <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" d="M5 12h14M12 5l7 7-7 7" />

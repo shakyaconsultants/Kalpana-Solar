@@ -29,7 +29,7 @@ const dataMap = {
 
 function SupplyBadge({ val }) {
   return (
-    <span className="inline-flex bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ring-1 ring-emerald-600/20">
+    <span className="inline-flex bg-kalpana-50 text-kalpana-700 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ring-1 ring-kalpana-600/20">
       {val}
     </span>
   );
@@ -56,7 +56,7 @@ export default function Products() {
               onClick={() => setActive(t)}
               className={`flex-1 min-w-[100px] px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 active === t
-                  ? "bg-white text-orange-600 shadow-sm"
+                  ? "bg-white text-kalpana-600 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -83,7 +83,7 @@ export default function Products() {
                 return (
                   <tr
                     key={i}
-                    className={`border-t border-slate-100 hover:bg-orange-50/40 transition-colors ${
+                    className={`border-t border-slate-100 hover:bg-kalpana-50/40 transition-colors ${
                       i % 2 === 0 ? "bg-white" : "bg-slate-50/50"
                     }`}
                   >
@@ -119,8 +119,8 @@ export default function Products() {
           })}
         </div>
 
-        <div className="mt-8 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/60 rounded-2xl p-5 sm:p-6 flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0">
+        <div className="mt-8 bg-gradient-to-r from-kalpana-50 to-accent-50 border border-kalpana-200/60 rounded-2xl p-5 sm:p-6 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl brand-gradient-bg text-white flex items-center justify-center shrink-0">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
             </svg>
@@ -129,7 +129,7 @@ export default function Products() {
             <p className="text-slate-900 font-bold">Custom orders welcome</p>
             <p className="text-slate-600 text-sm mt-1 leading-relaxed">
               Need a specific brand, wattage, or bulk quantity? We source directly from manufacturers.{" "}
-              <a href="#contact" className="text-orange-600 font-semibold hover:underline">
+              <a href="#contact" className="text-kalpana-600 font-semibold hover:underline">
                 Contact us
               </a>{" "}
               for competitive pricing.

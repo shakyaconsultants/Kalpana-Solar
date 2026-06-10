@@ -6,13 +6,13 @@ export default function SectionHeader({ eyebrow, title, description, light = fal
       {eyebrow && (
         <span
           className={`inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] mb-3 ${
-            light ? "text-orange-400" : "text-orange-600"
+            light ? "text-kalpana-300" : "text-kalpana-600"
           }`}
         >
-          <span className={`w-8 h-px ${light ? "bg-orange-400/60" : "bg-orange-300"}`} />
+          <span className={`w-8 h-px ${light ? "bg-kalpana-400/60" : "bg-kalpana-300"}`} />
           {eyebrow}
           {align === "center" && (
-            <span className={`w-8 h-px ${light ? "bg-orange-400/60" : "bg-orange-300"}`} />
+            <span className={`w-8 h-px ${light ? "bg-kalpana-400/60" : "bg-kalpana-300"}`} />
           )}
         </span>
       )}

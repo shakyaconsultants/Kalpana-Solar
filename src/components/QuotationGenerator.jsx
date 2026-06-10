@@ -1,5 +1,4 @@
 import { useMemo, useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
   INSTALLATION_TYPES,
   SYSTEM_TYPES,
@@ -16,6 +15,10 @@ import {
   getAllowedInverterBrands,
   resolveInverterBrand,
 } from "../data/quotationData";
+import QuoteWizardHeader from "./quote/QuoteWizardHeader";
+import CustomerStep from "./quote/CustomerStep";
+import PreviewStep from "./quote/PreviewStep";
+import { createQuoteReference, downloadPdfBlob, prepareQuotationPdfBlob } from "../utils/generateQuotationPdf";
 
 function FormDropdown({ value, onChange, options, placeholder = "Select an option" }) {
   const [open, setOpen] = useState(false);
@@ -43,23 +46,23 @@ function FormDropdown({ value, onChange, options, placeholder = "Select an optio
         onClick={() => setOpen((prev) => !prev)}
         className={`w-full text-left rounded-xl border px-4 py-3.5 text-sm font-semibold transition-all flex items-center justify-between gap-3 ${
           value != null
-            ? "border-orange-500 bg-orange-50 ring-1 ring-orange-500/20 text-orange-600"
+            ? "border-kalpana-500 bg-kalpana-50 ring-1 ring-kalpana-500/20 text-kalpana-600"
             : open
-            ? "border-orange-400 bg-white ring-1 ring-orange-400/20 text-slate-800"
-            : "border-slate-200 bg-white text-slate-500 hover:border-orange-300 hover:bg-orange-50/30"
+            ? "border-kalpana-400 bg-white ring-1 ring-kalpana-400/20 text-slate-800"
+            : "border-slate-200 bg-white text-slate-500 hover:border-kalpana-300 hover:bg-kalpana-50/30"
         }`}
       >
         <span>{displayLabel}</span>
         <span className="flex items-center gap-2 shrink-0">
           {value != null && (
-            <span className="w-3.5 h-3.5 rounded-full border-2 border-orange-500 bg-orange-500 flex items-center justify-center">
+            <span className="w-3.5 h-3.5 rounded-full border-2 border-kalpana-500 bg-kalpana-500 flex items-center justify-center">
               <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                 <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
           )}
           <svg
-            className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180 text-orange-500" : ""}`}
+            className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180 text-kalpana-500" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -88,13 +91,13 @@ function FormDropdown({ value, onChange, options, placeholder = "Select an optio
                   }}
                   className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors flex items-center justify-between gap-2 ${
                     isSelected
-                      ? "bg-orange-50 text-orange-600"
-                      : "text-slate-800 hover:bg-orange-50/40 hover:text-orange-600"
+                      ? "bg-kalpana-50 text-kalpana-600"
+                      : "text-slate-800 hover:bg-kalpana-50/40 hover:text-kalpana-600"
                   }`}
                 >
                   <span>{opt.label}</span>
                   {isSelected && (
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-orange-500 bg-orange-500 flex items-center justify-center shrink-0">
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-kalpana-500 bg-kalpana-500 flex items-center justify-center shrink-0">
                       <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                         <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
@@ -114,7 +117,7 @@ function SectionTitle({ step, title, subtitle }) {
   return (
     <div className="mb-5">
       <div className="flex items-start gap-3">
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/30">
+        <span className="w-8 h-8 rounded-xl brand-gradient-bg text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-sm shadow-kalpana-500/30">
           {step}
         </span>
         <div className="pt-0.5">
@@ -157,17 +160,17 @@ function OptionCards({ options, value, onChange, columns = 2, compact = false })
               compact ? "p-3" : "p-3.5"
             } ${
               selected
-                ? "border-orange-500 bg-orange-50 ring-1 ring-orange-500/20"
-                : "border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/30"
+                ? "border-kalpana-500 bg-kalpana-50 ring-1 ring-kalpana-500/20"
+                : "border-slate-200 bg-white hover:border-kalpana-300 hover:bg-kalpana-50/30"
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className={`font-semibold text-sm ${selected ? "text-orange-600" : "text-slate-800"}`}>
+              <span className={`font-semibold text-sm ${selected ? "text-kalpana-600" : "text-slate-800"}`}>
                 {label}
               </span>
               <span
                 className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center ${
-                  selected ? "border-orange-500 bg-orange-500" : "border-slate-300"
+                  selected ? "border-kalpana-500 bg-kalpana-500" : "border-slate-300"
                 }`}
               >
                 {selected && (
@@ -200,8 +203,8 @@ function YesNoToggle({ value, onChange }) {
           onClick={() => onChange(opt.id)}
           className={`py-3 px-3 rounded-xl text-sm font-semibold border transition-all ${
             value === opt.id
-              ? "border-orange-500 bg-orange-50 text-orange-600"
-              : "border-slate-200 text-slate-600 hover:border-orange-300 bg-white"
+              ? "border-kalpana-500 bg-kalpana-50 text-kalpana-600"
+              : "border-slate-200 text-slate-600 hover:border-kalpana-300 bg-white"
           }`}
         >
           {opt.label}
@@ -238,9 +241,9 @@ function MatchedConfiguration({ matched }) {
   const { system, panel, inverter, battery, compatibility } = matched;
 
   return (
-    <div className="rounded-2xl border border-orange-500/20 bg-white/[0.03] mb-4 overflow-hidden backdrop-blur-sm">
-      <div className="px-4 py-3 bg-gradient-to-r from-orange-500/15 to-transparent border-b border-orange-500/15">
-        <p className="text-orange-300 font-bold text-xs uppercase tracking-wider">Recommended system</p>
+    <div className="rounded-2xl border border-kalpana-500/20 bg-white/[0.03] mb-4 overflow-hidden backdrop-blur-sm">
+      <div className="px-4 py-3 bg-gradient-to-r from-kalpana-500/15 to-transparent border-b border-kalpana-500/15">
+        <p className="text-kalpana-300 font-bold text-xs uppercase tracking-wider">Recommended system</p>
         <p className="text-slate-400 text-[11px] mt-0.5">Lowest-cost compatible configuration</p>
       </div>
 
@@ -248,7 +251,7 @@ function MatchedConfiguration({ matched }) {
         {/* Panels */}
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="w-5 h-5 rounded-md bg-amber-500/20 flex items-center justify-center text-amber-400 text-[10px] font-bold">
+            <span className="w-5 h-5 rounded-md bg-accent-500/20 flex items-center justify-center text-accent-400 text-[10px] font-bold">
               P
             </span>
             <span className="text-xs font-semibold text-slate-200">Solar panels</span>
@@ -357,7 +360,7 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
             <p className="text-white font-extrabold text-base tracking-tight">Quote Summary</p>
             <p className="text-slate-400 text-xs mt-0.5">Live estimate as you configure</p>
           </div>
-          <span className="text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-bold text-kalpana-400 bg-kalpana-500/10 border border-kalpana-500/20 px-2.5 py-1 rounded-full">
             {progress}%
           </span>
         </div>
@@ -365,7 +368,7 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
         <div className="mb-5">
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full transition-all duration-500"
+              className="h-full brand-gradient-bg rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -456,22 +459,22 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
               type="button"
               onClick={handlePreviewPdf}
               disabled={pdfLoading}
-              className="flex items-center justify-center gap-2 w-full bg-white text-slate-900 hover:bg-orange-50 text-sm font-bold py-3.5 rounded-xl transition-all disabled:opacity-60 shadow-lg shadow-black/10"
+              className="flex items-center justify-center gap-2 w-full bg-white text-slate-900 hover:bg-kalpana-50 text-sm font-bold py-3.5 rounded-xl transition-all disabled:opacity-60 shadow-lg shadow-black/10"
             >
-              <svg className="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg className="w-4 h-4 text-kalpana-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M14 3h7v7M10 14L21 3M5 12v7a2 2 0 0 0 2 2h7" />
               </svg>
               {pdfLoading ? "Generating…" : "Get PDF"}
             </button>
             {pdfError && (
-              <p className="text-amber-300/90 text-[10px] text-center mt-2">Unable to generate PDF.</p>
+              <p className="text-red-400/90 text-[10px] text-center mt-2">Unable to generate PDF.</p>
             )}
           </div>
         )}
 
         <Link
           to="/#contact"
-          className="flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-orange-500/25"
+          className="flex items-center justify-center gap-2 w-full bg-kalpana-500 hover:bg-kalpana-600 text-white text-sm font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-kalpana-500/25"
         >
           Request Detailed Proposal
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -490,8 +493,8 @@ function PricePanel({ selections, formValid, progress, onReset, hasAnySelection 
         )}
 
         <div className="flex items-start gap-3 mt-5 pt-4 border-t border-white/10">
-          <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center shrink-0">
-            <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <div className="w-8 h-8 rounded-lg bg-kalpana-500/15 border border-kalpana-500/20 flex items-center justify-center shrink-0">
+            <svg className="w-3.5 h-3.5 text-kalpana-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
@@ -537,6 +540,10 @@ function computeProgress(selections, showBatteryQuestion, showBatteryBrand, show
 }
 
 export default function QuotationGenerator() {
+  const [wizardStep, setWizardStep] = useState(1);
+  const [customer, setCustomer] = useState({ name: "", phone: "", address: "", city: "" });
+  const [quoteRef, setQuoteRef] = useState(null);
+
   const [plantLoadKw, setPlantLoadKw] = useState(null);
   const [installationType, setInstallationType] = useState("");
   const [systemType, setSystemType] = useState("");
@@ -546,6 +553,9 @@ export default function QuotationGenerator() {
   const [panelCategory, setPanelCategory] = useState("");
   const [inverterBrand, setInverterBrand] = useState("");
   const [batteryBrand, setBatteryBrand] = useState("");
+  const pdfCacheRef = useRef(null);
+  const [pdfSaving, setPdfSaving] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
 
   const allowedInverterBrands = useMemo(
     () => (systemType && plantLoadKw ? getAllowedInverterBrands(systemType, plantLoadKw) : []),
@@ -593,8 +603,22 @@ export default function QuotationGenerator() {
   );
 
   const formValid = isFormValid(selections);
-  const progress = computeProgress(selections, showBatteryQuestion, showBatteryBrand, showFloorQuestion);
-  const hasAnySelection = !!(plantLoadKw || installationType || systemType || panelCompany);
+  const breakdown = formValid ? calculateQuoteBreakdown(selections) : null;
+
+  useEffect(() => {
+    pdfCacheRef.current = null;
+    setPdfError(null);
+  }, [wizardStep, quoteRef, breakdown?.finalPrice, customer, selections]);
+
+  const systemTypeLabel = SYSTEM_TYPES.find((s) => s.id === systemType)?.label ?? "";
+  const summaryLine = [
+    breakdown?.matched?.panel ? `${breakdown.matched.panel.totalKwp} kWp` : plantLoadKw ? `${plantLoadKw} kW` : "",
+    systemTypeLabel,
+    installationType,
+    customer.name.trim(),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   function handleSystemTypeChange(type) {
     setSystemType(type);
@@ -612,6 +636,9 @@ export default function QuotationGenerator() {
   }
 
   function handleReset() {
+    setWizardStep(1);
+    setCustomer({ name: "", phone: "", address: "", city: "" });
+    setQuoteRef(null);
     setPlantLoadKw(null);
     setInstallationType("");
     setSystemType("");
@@ -623,63 +650,85 @@ export default function QuotationGenerator() {
     setBatteryBrand("");
   }
 
+  function handleGenerate() {
+    if (!formValid || !breakdown?.finalPrice) return;
+    setQuoteRef((prev) => prev ?? createQuoteReference());
+    setWizardStep(3);
+    window.scrollTo(0, 0);
+  }
+
+  async function handlePrintSavePdf() {
+    if (!breakdown?.finalPrice || pdfSaving) return;
+
+    const cached = pdfCacheRef.current;
+    if (cached) {
+      downloadPdfBlob(cached.blob, cached.filename);
+      return;
+    }
+
+    setPdfSaving(true);
+    setPdfError(null);
+    try {
+      const result = await prepareQuotationPdfBlob({
+        selections,
+        breakdown,
+        customer,
+        quoteRef: quoteRef ?? createQuoteReference(),
+      });
+      pdfCacheRef.current = result;
+      downloadPdfBlob(result.blob, result.filename);
+    } catch (err) {
+      console.error("PDF save failed:", err);
+      setPdfError(err?.message || "Could not create PDF. Try Print → Save as PDF in the dialog.");
+      window.print();
+    } finally {
+      setPdfSaving(false);
+    }
+  }
+
   let stepCounter = 0;
   const nextStep = () => ++stepCounter;
 
-  const pricePanel = (
-    <PricePanel
-      selections={selections}
-      formValid={formValid}
-      progress={progress}
-      onReset={handleReset}
-      hasAnySelection={hasAnySelection}
-    />
-  );
-
   return (
-    <section className="pb-16 lg:pb-24 pt-8 sm:pt-10">
-      <div className="container-main">
-        {/* Steps hint — desktop */}
-        <div className="hidden lg:grid grid-cols-3 gap-4 mb-8">
-          {[
-            { n: "1", t: "Configure", d: "Select load, system type & equipment" },
-            { n: "2", t: "Review price", d: "Live estimate in the summary panel" },
-            { n: "3", t: "Get PDF", d: "Export your quotation" },
-          ].map((s) => (
-            <div key={s.n} className="card px-4 py-3 flex items-start gap-3">
-              <span className="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 text-xs font-bold flex items-center justify-center shrink-0">
-                {s.n}
-              </span>
-              <div>
-                <p className="font-bold text-slate-900 text-sm">{s.t}</p>
-                <p className="text-slate-500 text-xs mt-0.5">{s.d}</p>
+    <div className="quote-wizard-page">
+      <QuoteWizardHeader
+        step={wizardStep}
+        showActions={wizardStep === 3}
+        onNew={handleReset}
+        onPrint={wizardStep === 3 ? handlePrintSavePdf : undefined}
+        pdfBusy={pdfSaving}
+      />
+
+      <div className={`mx-auto px-4 sm:px-6 py-8 sm:py-10 ${wizardStep === 3 ? "max-w-5xl" : "max-w-3xl"}`}>
+        {wizardStep === 1 && (
+          <CustomerStep
+            customer={customer}
+            onChange={setCustomer}
+            onNext={() => {
+              setWizardStep(2);
+              window.scrollTo(0, 0);
+            }}
+          />
+        )}
+
+        {wizardStep === 2 && (
+          <div className="quote-wizard-card">
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-kalpana-50 ring-1 ring-kalpana-100 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-kalpana-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               </div>
-            </div>
-          ))}
-        </div>
-        {/* Mobile — price summary on top */}
-        <aside className="lg:hidden mb-8">
-          {pricePanel}
-        </aside>
-
-        <div className="lg:flex lg:gap-10 lg:items-stretch">
-          <aside className="hidden lg:block lg:w-[360px] xl:w-[400px] shrink-0">
-            <div className="sticky top-24">
-              {pricePanel}
-            </div>
-          </aside>
-
-          {/* Configuration form */}
-          <div className="flex-1 min-w-0">
-            <div className="card overflow-hidden shadow-md ring-1 ring-slate-200/80">
-              <div className="px-6 sm:px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-orange-50/40">
-                <h2 className="font-extrabold text-slate-900 text-lg tracking-tight">Configure Your System</h2>
-                <p className="text-slate-500 text-sm mt-1">
-                  Select each option — your price updates live on the left.
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">System Configuration</h2>
+              <p className="text-slate-500 text-sm mt-2">Choose system type, capacity, panels and inverter</p>
+              {formValid && breakdown?.finalPrice != null && (
+                <p className="mt-4 inline-flex items-center gap-2 bg-kalpana-50 border border-kalpana-200 text-kalpana-700 font-bold text-sm px-4 py-2 rounded-full">
+                  Estimated: {formatINR(breakdown.finalPrice)}
                 </p>
-              </div>
+              )}
+            </div>
 
-              <div className="p-6 sm:p-8 space-y-10">
+            <div className="space-y-8 sm:space-y-10">
                 <div>
                   <SectionTitle
                     step={nextStep()}
@@ -811,8 +860,8 @@ export default function QuotationGenerator() {
                       Select plant load and system type first.
                     </p>
                   ) : allowedInverterBrands.length === 1 ? (
-                    <p className="text-sm text-slate-600 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
-                      <span className="font-semibold text-orange-700">{allowedInverterBrands[0]}</span>
+                    <p className="text-sm text-slate-600 bg-kalpana-50 border border-kalpana-200 rounded-xl px-4 py-3">
+                      <span className="font-semibold text-kalpana-700">{allowedInverterBrands[0]}</span>
                       {" — "}only option for this configuration (auto-applied).
                     </p>
                   ) : (
@@ -848,16 +897,50 @@ export default function QuotationGenerator() {
                     />
                   </div>
                 )}
-              </div>
             </div>
 
-            <p className="lg:hidden text-center text-xs text-slate-400 mt-5 px-4 leading-relaxed">
-              All prices are indicative. A free site survey confirms final sizing and subsidy eligibility.
-            </p>
+            <div className="flex gap-3 mt-8 pt-6 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setWizardStep(1)}
+                className="quote-wizard-btn-back"
+                aria-label="Back"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                disabled={!formValid || breakdown?.finalPrice == null}
+                onClick={handleGenerate}
+                className="quote-wizard-btn-primary flex-1 disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              >
+                Generate Quotation
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {wizardStep === 3 && breakdown?.finalPrice != null && (
+          <PreviewStep
+            customer={customer}
+            selections={selections}
+            breakdown={breakdown}
+            quoteRef={quoteRef}
+            summaryLine={summaryLine}
+            onEdit={() => setWizardStep(2)}
+            onNew={handleReset}
+            onPrint={handlePrintSavePdf}
+            pdfError={pdfError}
+            pdfBusy={pdfSaving}
+          />
+        )}
       </div>
-    </section>
+    </div>
   );
 }
 

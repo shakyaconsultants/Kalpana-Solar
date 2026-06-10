@@ -35,7 +35,7 @@ export default function Footer() {
             <Link to="/quote" className="btn-primary text-sm py-3 px-6">
               Get Quote
             </Link>
-            <a href="/#contact" className="btn-outline border-slate-700 text-slate-300 hover:border-orange-500 hover:text-orange-400 text-sm py-3 px-6">
+            <a href="/#contact" className="btn-outline border-slate-700 text-slate-300 hover:border-kalpana-500 hover:text-kalpana-400 text-sm py-3 px-6">
               Contact Us
             </a>
           </div>
@@ -50,14 +50,14 @@ export default function Footer() {
               Authorised wholesale distributor and installation partner for complete rooftop solar solutions across India.
             </p>
             <div className="mt-5 space-y-2 text-sm">
-              <a href="tel:8736992133" className="flex items-center gap-2 hover:text-orange-400 transition-colors">
-                <svg className="w-4 h-4 text-orange-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <a href="tel:8736992133" className="flex items-center gap-2 hover:text-kalpana-400 transition-colors">
+                <svg className="w-4 h-4 text-kalpana-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6.29 6.29l1.08-1.08a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
                 8736992133
               </a>
-              <a href="mailto:kalpanasolartradersinfo@gmail.com" className="flex items-center gap-2 hover:text-orange-400 transition-colors break-all">
-                <svg className="w-4 h-4 text-orange-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <a href="mailto:kalpanasolartradersinfo@gmail.com" className="flex items-center gap-2 hover:text-kalpana-400 transition-colors break-all">
+                <svg className="w-4 h-4 text-kalpana-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <rect x="2" y="4" width="20" height="16" rx="2" />
                   <path strokeLinecap="round" d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
@@ -71,7 +71,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               {serviceLinks.map((s) => (
                 <li key={s}>
-                  <a href="/#services" className="hover:text-orange-400 transition-colors">
+                  <a href="/#services" className="hover:text-kalpana-400 transition-colors">
                     {s}
                   </a>
                 </li>
@@ -84,7 +84,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               {productLinks.map((p) => (
                 <li key={p}>
-                  <a href="/#products" className="hover:text-orange-400 transition-colors">
+                  <a href="/#products" className="hover:text-kalpana-400 transition-colors">
                     {p}
                   </a>
                 </li>
@@ -110,7 +110,7 @@ export default function Footer() {
             href="https://maps.app.goo.gl/DAMxtmT5VuBBoshi7"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-orange-400 hover:text-orange-300 font-medium transition-colors"
+            className="inline-flex items-center gap-1.5 text-kalpana-400 hover:text-kalpana-300 font-medium transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />

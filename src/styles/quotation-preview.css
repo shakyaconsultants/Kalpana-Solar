@@ -1,0 +1,1024 @@
+/* ─── Enterprise Quotation Document (Preview + Print) ─── */
+
+.quote-doc {
+  --quote-primary: #3b7ce8;
+  --quote-secondary: #6366f1;
+  --quote-accent: #818cf8;
+  --quote-violet: #7c3aed;
+  --quote-dark: #0f172a;
+  --quote-gradient: linear-gradient(135deg, #38bdf8 0%, #3b7ce8 38%, #6366f1 72%, #7c3aed 100%);
+  --quote-gradient-deep: linear-gradient(135deg, #2563d4 0%, #4f46e5 55%, #6d28d9 100%);
+
+  font-family: "Inter", system-ui, sans-serif;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+.quote-doc-heading {
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+.quote-preview-stack {
+  @apply rounded-2xl p-4 sm:p-6 space-y-6 sm:space-y-8;
+  background: linear-gradient(180deg, #e2e8f0 0%, #eef4ff 100%);
+  border: 1px solid #c7d7f5;
+}
+
+.quote-preview-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  max-height: 297mm;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #f8fafc;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  border-radius: 4px;
+}
+
+.quote-preview-page-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 22px 26px;
+  box-sizing: border-box;
+}
+
+/* ─── Footer ─── */
+.quote-doc-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 26px;
+  background: linear-gradient(135deg, #2563d4 0%, #4f46e5 55%, #6d28d9 100%);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 8px;
+  line-height: 1.35;
+  box-sizing: border-box;
+}
+
+.quote-doc-footer-logo {
+  height: 20px;
+  width: auto;
+  max-width: 80px;
+  object-fit: contain;
+  opacity: 0.95;
+}
+
+.quote-doc-footer-meta {
+  text-align: center;
+  flex: 1 1 auto;
+}
+
+.quote-doc-footer-right {
+  text-align: right;
+}
+
+.quote-footer-sep {
+  margin-left: 8px;
+  margin-right: 8px;
+  opacity: 0.5;
+}
+
+.quote-footer-dim {
+  opacity: 0.75;
+}
+
+.quote-icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.quote-icon-md {
+  width: 20px;
+  height: 20px;
+}
+
+.quote-spaced-top {
+  margin-top: 8px;
+}
+
+.quote-spaced-bottom {
+  margin-bottom: 8px;
+}
+
+.quote-italic {
+  font-style: italic;
+}
+
+.quote-benefit-card--span2 {
+  grid-column: span 2;
+}
+
+.quote-section--grow {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.quote-page-balanced {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  justify-content: space-between;
+}
+
+.quote-page-balanced .quote-page-header {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+}
+
+.quote-page-balanced .quote-section {
+  margin-bottom: 12px;
+}
+
+.quote-page-balanced .quote-kpi-card {
+  padding: 11px 10px;
+}
+
+.quote-page-balanced .quote-pricing-card {
+  padding: 20px;
+}
+
+.quote-page-balanced .quote-pricing-amount {
+  font-size: 32px;
+}
+
+.quote-page-balanced .quote-exec-card {
+  font-size: 9px;
+  line-height: 1.48;
+  padding: 10px 12px;
+  column-gap: 12px;
+}
+
+.quote-page-balanced .quote-commercial-table-row {
+  padding: 10px 14px;
+}
+
+.quote-page-balanced .quote-commercial-total {
+  padding: 8px 12px;
+}
+
+/* ─── Page 1 Cover ─── */
+.quote-cover {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, #f8fafc 0%, #eef4ff 45%, #f0f9ff 100%);
+}
+
+.quote-cover-inner {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  justify-content: center;
+  gap: 24px;
+}
+
+.quote-cover-deco {
+  @apply absolute pointer-events-none;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 85% 15%, rgba(129, 140, 248, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 10% 90%, rgba(59, 124, 232, 0.08) 0%, transparent 50%);
+}
+
+.quote-cover-panels {
+  @apply absolute top-8 right-8 opacity-[0.07];
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  width: 120px;
+}
+
+.quote-cover-panel-cell {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--quote-primary), #6366f1);
+  border-radius: 2px;
+}
+
+.quote-cover-top {
+  @apply relative z-10 text-center;
+}
+
+.quote-cover-logo-wrap {
+  @apply inline-flex items-center justify-center mx-auto;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(59, 124, 232, 0.12);
+  border: 1px solid #e5e7eb;
+}
+
+.quote-cover-logo-wrap img {
+  display: block;
+  max-height: 56px;
+  max-width: 140px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.quote-cover-company {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  margin-top: 1rem;
+  font-size: 15px;
+  color: var(--quote-primary);
+  letter-spacing: 0.04em;
+}
+
+.quote-cover-tagline {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.quote-cover-contact {
+  @apply mt-3 space-y-0.5;
+  font-size: 10px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.quote-cover-hero {
+  position: relative;
+  z-index: 10;
+  margin: 4px auto 0;
+  text-align: center;
+  color: #fff;
+  width: 100%;
+  max-width: 380px;
+  padding: 28px 24px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563d4 0%, #4f46e5 55%, #6d28d9 100%);
+  box-shadow: 0 12px 36px rgba(59, 124, 232, 0.3);
+}
+
+.quote-cover-hero-label {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.quote-cover-hero-kwp {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1.1;
+  margin-top: 6px;
+  letter-spacing: -0.02em;
+}
+
+.quote-cover-hero-sub {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+.quote-cover-hero-icons {
+  @apply flex justify-center gap-6 mt-5 opacity-80;
+}
+
+.quote-cover-customer {
+  @apply relative z-10 mx-auto mt-8;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px 24px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  text-align: center;
+  margin-top: 2px;
+}
+
+.quote-cover-customer-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.quote-cover-customer-name {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  font-size: 20px;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.quote-cover-customer-detail {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.quote-cover-bottom {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  text-align: center;
+  padding-top: 4px;
+  font-size: 11px;
+}
+
+.quote-cover-bottom-label {
+  color: #6b7280;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.quote-cover-bottom-value {
+  @apply font-semibold mt-1;
+  color: #111827;
+  font-size: 12px;
+}
+
+.quote-cover-bottom-value--accent {
+  color: var(--quote-primary);
+}
+
+/* ─── Shared page chrome ─── */
+.quote-page-header {
+  @apply flex items-start justify-between mb-6 pb-4;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.quote-page-header-title {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: #111827;
+}
+
+.quote-page-header-sub {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.quote-page-header-logo img {
+  max-height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ─── KPI Cards ─── */
+.quote-kpi-grid {
+  @apply grid grid-cols-4 gap-3;
+}
+
+.quote-kpi-card {
+  padding: 14px 12px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.quote-kpi-card-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.quote-kpi-card-value {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  margin-top: 0.375rem;
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.quote-kpi-card-icon {
+  @apply w-7 h-7 rounded-lg flex items-center justify-center mb-2;
+  background: rgba(59, 124, 232, 0.1);
+  color: var(--quote-primary);
+}
+
+/* ─── Pricing card ─── */
+.quote-pricing-card {
+  @apply relative overflow-hidden;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--quote-gradient-deep);
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(59, 124, 232, 0.28);
+}
+
+.quote-pricing-label {
+  font-size: 12px;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.quote-pricing-amount {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+
+.quote-pricing-gst {
+  @apply mt-3 pt-3 space-y-1;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+/* ─── Benefits grid ─── */
+.quote-benefits-grid {
+  @apply grid grid-cols-5 gap-2;
+}
+
+.quote-benefit-card {
+  padding: 10px 8px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.quote-benefit-card-value {
+  @apply font-semibold;
+  font-size: 13px;
+  color: var(--quote-primary);
+}
+
+.quote-benefit-card-label {
+  font-size: 9px;
+  color: #6b7280;
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+/* ─── Section blocks ─── */
+.quote-section {
+  @apply mb-5;
+}
+
+.quote-section-title {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quote-section-title-bar {
+  width: 4px;
+  height: 18px;
+  background: var(--quote-gradient);
+  border-radius: 2px;
+}
+
+.quote-exec-card {
+  padding: 14px 16px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  font-size: 10px;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-line;
+  column-count: 2;
+  column-gap: 16px;
+}
+
+.quote-page-compact .quote-section {
+  margin-bottom: 8px;
+}
+
+.quote-page-compact .quote-page-header {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.quote-page-compact .quote-kpi-card {
+  padding: 8px 6px;
+}
+
+.quote-page-compact .quote-kpi-card-value {
+  font-size: 12px;
+}
+
+.quote-page-compact .quote-pricing-amount {
+  font-size: 26px;
+}
+
+.quote-page-compact .quote-section-title {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.quote-page-compact .quote-exec-card {
+  font-size: 9px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  column-gap: 12px;
+}
+
+.quote-page2-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quote-benefits-grid--page2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 6px;
+}
+
+.quote-commercial-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.quote-commercial-total-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.quote-commercial-total-value {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #3b7ce8;
+}
+
+.quote-muted {
+  color: #6b7280;
+}
+
+.quote-muted-sm {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.quote-text-right {
+  text-align: right;
+}
+
+.quote-bom-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.quote-bom-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.quote-bom-row .sno {
+  color: #9ca3af;
+}
+
+.quote-page4-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quote-page4-compact .quote-page-header {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+}
+
+.quote-page4-compact .quote-section {
+  margin-bottom: 12px;
+}
+
+.quote-page4-compact .quote-warranty-card {
+  padding: 12px 10px;
+}
+
+.quote-page4-compact .quote-warranty-card-period {
+  font-size: 19px;
+}
+
+.quote-page4-compact .quote-warranty-grid {
+  gap: 8px;
+}
+
+.quote-page4-compact .quote-payment-timeline {
+  padding: 12px;
+}
+
+.quote-page4-compact .quote-payment-step-pct {
+  font-size: 17px;
+}
+
+.quote-page4-compact .quote-signature-block {
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.quote-terms-panel {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+}
+
+.quote-terms-panel .quote-terms-grid {
+  gap: 4px 10px;
+}
+
+.quote-terms-panel .quote-term-item {
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.quote-signature-name--spaced {
+  margin-top: 2rem;
+}
+
+.quote-thanks-line {
+  font-size: 10px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-top: 6px;
+}
+
+/* Capture mode — exact A4 pixel box for PDF */
+.quote-pdf-capture-mode .quote-preview-page {
+  width: 794px;
+  height: 1123px;
+  min-height: 1123px;
+  max-height: 1123px;
+}
+
+.quote-pdf-capture-mode .quote-preview-stack {
+  padding: 0;
+  gap: 0;
+  background: #fff;
+  border: none;
+}
+
+.quote-commercial-table {
+  @apply overflow-hidden;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.quote-commercial-table-head {
+  @apply grid font-semibold uppercase tracking-wide;
+  grid-template-columns: 32px 1fr 64px 40px 48px 88px;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #111827;
+  color: #fff;
+  font-size: 9px;
+}
+
+.quote-commercial-table-row {
+  @apply grid items-start;
+  grid-template-columns: 32px 1fr 64px 40px 48px 88px;
+  gap: 8px;
+  padding: 12px 14px;
+  font-size: 11px;
+  background: #f8fafc;
+}
+
+.quote-commercial-table-row .amount {
+  @apply font-semibold text-right;
+  color: var(--quote-primary);
+}
+
+.quote-commercial-subject {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--quote-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+/* ─── BOM ─── */
+.quote-bom-head {
+  @apply grid font-semibold uppercase tracking-wide sticky top-0;
+  grid-template-columns: 40px 1fr 80px 64px;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #111827;
+  color: #fff;
+  font-size: 9.5px;
+}
+
+.quote-bom-category {
+  padding: 7px 12px 6px;
+  background: rgba(59, 124, 232, 0.08);
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.quote-bom-category-label {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  color: var(--quote-primary);
+  letter-spacing: 0.08em;
+}
+
+.quote-bom-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 32px 1fr 72px 56px;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 8.8px;
+  line-height: 1.35;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.quote-bom-row:nth-child(even) {
+  background: #f8fafc;
+}
+
+.quote-bom-row .desc {
+  @apply font-medium;
+  color: #111827;
+}
+
+.quote-bom-row .rating,
+.quote-bom-row .qty {
+  text-align: right;
+  color: #6b7280;
+}
+
+.quote-bom-row .qty {
+  @apply font-semibold;
+  color: #111827;
+}
+
+/* ─── Page 4 dashboard ─── */
+.quote-warranty-grid {
+  @apply grid grid-cols-4 gap-3;
+}
+
+.quote-warranty-card {
+  padding: 16px 12px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.quote-warranty-card-period {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--quote-accent);
+  line-height: 1.2;
+}
+
+.quote-warranty-card-label {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+.quote-warranty-card-icon {
+  @apply w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center;
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--quote-primary);
+}
+
+.quote-cover-inner {
+  @apply flex-1 flex flex-col;
+}
+
+.quote-payment-timeline {
+  @apply flex items-center justify-between gap-1;
+  padding: 16px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.quote-payment-step-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.quote-payment-step {
+  @apply flex-1 text-center relative;
+}
+
+.quote-payment-step-pct {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--quote-primary);
+}
+
+.quote-payment-step-label {
+  @apply font-semibold;
+  font-size: 11px;
+  color: #111827;
+  margin-top: 2px;
+}
+
+.quote-payment-step-detail {
+  font-size: 9px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.quote-payment-arrow {
+  @apply flex items-center justify-center shrink-0;
+  color: var(--quote-accent);
+  font-size: 16px;
+  font-weight: bold;
+  padding: 0 4px;
+}
+
+.quote-bank-card {
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  color: #e5e7eb;
+}
+
+.quote-bank-card-title {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--quote-accent);
+  margin-bottom: 10px;
+}
+
+.quote-bank-row {
+  @apply flex justify-between gap-4 py-1;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.quote-bank-row:last-child {
+  border-bottom: none;
+}
+
+.quote-bank-row span:first-child {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.quote-bank-row span:last-child {
+  @apply font-semibold text-right;
+  color: #fff;
+}
+
+.quote-terms-grid {
+  @apply grid grid-cols-2 gap-x-4 gap-y-2;
+}
+
+.quote-term-item {
+  @apply flex gap-2 items-start;
+  font-size: 10px;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.quote-term-check {
+  @apply shrink-0 w-4 h-4 rounded-full flex items-center justify-center mt-0.5;
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.quote-signature-block {
+  @apply grid grid-cols-2 gap-6 mt-4 pt-4;
+  border-top: 1px solid #e5e7eb;
+}
+
+.quote-signature-area {
+  padding: 16px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px dashed #d1d5db;
+  min-height: 80px;
+}
+
+.quote-signature-label {
+  font-size: 10px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.quote-signature-name {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  font-size: 13px;
+  color: #111827;
+}
+
+.quote-seal-placeholder {
+  @apply mt-3 inline-flex items-center justify-center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px dashed #d1d5db;
+  font-size: 8px;
+  color: #9ca3af;
+  text-align: center;
+  line-height: 1.2;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #quote-preview-document,
+  #quote-preview-document * {
+    visibility: visible;
+  }
+
+  #quote-preview-document {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    background: white;
+    padding: 0;
+  }
+
+  .quote-preview-page {
+    box-shadow: none;
+    page-break-after: always;
+    max-width: none;
+    min-height: auto;
+    border-radius: 0;
+  }
+
+  .quote-preview-stack {
+    border: none;
+    padding: 0;
+    gap: 0;
+    background: white;
+  }
+}

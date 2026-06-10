@@ -60,7 +60,7 @@ export default function Navbar() {
                   href={sectionHref(l.href)}
                   className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
                     navSolid
-                      ? "text-slate-600 hover:text-orange-600 hover:bg-orange-50"
+                      ? "text-slate-600 hover:text-kalpana-600 hover:bg-kalpana-50"
                       : "text-white/90 hover:text-white hover:bg-white/10"
                   }`}
                 >
@@ -72,10 +72,8 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center shrink-0">
               <Link
                 to="/quote"
-                className={`text-sm font-bold px-5 py-2.5 rounded-full transition-all shadow-lg ${
-                  isQuotePage
-                    ? "bg-orange-600 text-white shadow-orange-600/30"
-                    : "bg-orange-500 text-white hover:bg-orange-600 shadow-orange-500/30 hover:shadow-orange-500/40"
+                className={`text-sm font-bold px-5 py-2.5 rounded-full transition-all shadow-lg brand-gradient-bg text-white hover:brightness-105 ${
+                  isQuotePage ? "shadow-kalpana-600/40" : "shadow-kalpana-500/30"
                 }`}
               >
                 Get Quote
@@ -118,7 +116,7 @@ export default function Navbar() {
                 key={l.href}
                 href={sectionHref(l.href)}
                 onClick={() => setOpen(false)}
-                className="block px-6 py-4 text-sm font-semibold text-slate-700 hover:bg-orange-50 hover:text-orange-600 border-b border-slate-50"
+                className="block px-6 py-4 text-sm font-semibold text-slate-700 hover:bg-kalpana-50 hover:text-kalpana-600 border-b border-slate-50"
               >
                 {l.label}
               </a>

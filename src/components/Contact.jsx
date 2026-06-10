@@ -57,15 +57,15 @@ export default function Contact() {
                 },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center shrink-0">
-                    <svg className="w-4.5 h-4.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <div className="w-10 h-10 bg-kalpana-50 rounded-xl flex items-center justify-center shrink-0">
+                    <svg className="w-4.5 h-4.5 text-kalpana-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       {item.icon}
                     </svg>
                   </div>
                   <div>
                     <p className="font-bold text-slate-800 text-sm">{item.label}</p>
                     {item.href ? (
-                      <a href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="text-slate-600 hover:text-orange-600 text-sm transition-colors">
+                      <a href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="text-slate-600 hover:text-kalpana-600 text-sm transition-colors">
                         {item.value}
                       </a>
                     ) : (
@@ -78,10 +78,10 @@ export default function Contact() {
 
             <Link
               to="/quote"
-              className="block card p-5 bg-gradient-to-br from-orange-500 to-orange-600 border-0 text-white hover:shadow-lg hover:shadow-orange-500/25 transition-all group"
+              className="block card p-5 brand-gradient-bg border-0 text-white hover:brightness-105 transition-all group shadow-lg shadow-kalpana-500/20"
             >
               <p className="font-bold text-lg">Need a quick estimate?</p>
-              <p className="text-orange-100 text-sm mt-1">Use our instant quote calculator →</p>
+              <p className="text-kalpana-100 text-sm mt-1">Use our instant quote calculator →</p>
             </Link>
           </div>
 

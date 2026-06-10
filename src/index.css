@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --solar-orange: #f97316;
+  --solar-amber: #f59e0b;
+  --solar-dark: #0f1623;
+  --solar-navy: #1a2744;
+  --solar-slate: #1e293b;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Inter", system-ui, -apple-system, sans-serif; background: #fff; color: #1e293b; }
+
+.brand-gradient {
+  background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+}
+
+.brand-gradient-text {
+  background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

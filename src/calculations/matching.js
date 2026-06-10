@@ -11,7 +11,12 @@ import {
   INVERGY_OFFGRID_OG,
 } from "../data/prices/invergy.js";
 import { MICROTEK_OFFGRID_PWM, MICROTEK_OFFGRID_MAX_KW, MICROTEK_ONGRID_GTI, MICROTEK_HYBRID } from "../data/prices/microtek.js";
-import { GST } from "../data/prices/taxes.js";
+import {
+  GST,
+  withInverterGst,
+  withBatteryGst,
+  splitInclusiveGst,
+} from "../data/prices/taxes.js";
 
 /** Map battery nominal V → inverter DC bus bucket (12 / 24 / 48) */
 export function getVoltageBucket(voltage) {
@@ -33,12 +38,13 @@ function withPanelGst(exGst) {
   return Math.round(exGst * (1 + PANEL_GST_RATE));
 }
 
-function withMicrotekGst(exGst) {
-  return Math.round(exGst * (1 + GST.MICROTEK_INVERTER_RATE));
+function attachInverterTax(fields, exGst, gstIncluded = false) {
+  const tax = gstIncluded ? splitInclusiveGst(exGst, GST.INVERTER_RATE) : withInverterGst(exGst);
+  return { ...fields, ...tax };
 }
 
-function withOghGst(exGst) {
-  return Math.round(exGst * (1 + GST.INVERGY_OGH_QUOTE_GST_RATE));
+function attachBatteryTax(fields, exGst) {
+  return { ...fields, ...withBatteryGst(exGst) };
 }
 
 /** Cheapest panel layout for plant kW (DCR tier set by system type; best wattage among options) */
@@ -82,14 +88,15 @@ function pickMicrotekOnGrid(plantKw, preferSinglePhase = true) {
 
     if (candidates.length) {
       const inv = candidates[0];
-      return {
-        brand: "Microtek",
-        modelNo: `Microtek GTI ${inv.capacityKw}kW`,
-        capacityKw: inv.capacityKw,
-        cost: withMicrotekGst(inv.priceExGst),
-        dcBusVoltage: null,
-        gstIncluded: false,
-      };
+      return attachInverterTax(
+        {
+          brand: "Microtek",
+          modelNo: `Microtek GTI ${inv.capacityKw}kW`,
+          capacityKw: inv.capacityKw,
+          dcBusVoltage: null,
+        },
+        inv.priceExGst
+      );
     }
   }
 
@@ -109,14 +116,15 @@ function pickMicrotekHybrid(plantKw, preferSinglePhase = true) {
 
     if (candidates.length) {
       const inv = candidates[0];
-      return {
-        brand: "Microtek",
-        modelNo: `Microtek Hybrid ${inv.capacityKw}kW`,
-        capacityKw: inv.capacityKw,
-        cost: withMicrotekGst(inv.priceExGst),
-        dcBusVoltage: parseInverterDcVoltage(inv.voltage),
-        gstIncluded: false,
-      };
+      return attachInverterTax(
+        {
+          brand: "Microtek",
+          modelNo: `Microtek Hybrid ${inv.capacityKw}kW`,
+          capacityKw: inv.capacityKw,
+          dcBusVoltage: parseInverterDcVoltage(inv.voltage),
+        },
+        inv.priceExGst
+      );
     }
   }
 
@@ -133,14 +141,16 @@ function pickSmallestInvergyOnGrid(plantKw, preferSinglePhase = true) {
 
     if (candidates.length) {
       const inv = candidates[0];
-      return {
-        brand: "Invergy",
-        modelNo: inv.modelNo,
-        capacityKw: inv.capacityKw,
-        cost: inv.msp,
-        dcBusVoltage: null,
-        gstIncluded: true,
-      };
+      return attachInverterTax(
+        {
+          brand: "Invergy",
+          modelNo: inv.modelNo,
+          capacityKw: inv.capacityKw,
+          dcBusVoltage: null,
+        },
+        inv.msp,
+        true
+      );
     }
   }
   return null;
@@ -153,15 +163,16 @@ function pickInvergyHybrid(plantKw) {
 
   if (ogh.length) {
     const q = ogh[0];
-    return {
-      brand: "Invergy",
-      modelNo: q.modelNo,
-      capacityKw: q.capacityKw,
-      cost: withOghGst(q.priceExGst),
-      dcBusVoltage: q.capacityKw <= 3 ? 24 : 24,
-      gstIncluded: false,
-      note: "OGH hybrid quote + GST",
-    };
+    return attachInverterTax(
+      {
+        brand: "Invergy",
+        modelNo: q.modelNo,
+        capacityKw: q.capacityKw,
+        dcBusVoltage: q.capacityKw <= 3 ? 24 : 24,
+        note: "OGH hybrid quote + GST",
+      },
+      q.priceExGst
+    );
   }
 
   const lv = INVERGY_HYBRID_LV.filter((i) => i.capacityKw >= plantKw && i.phase === "1P").sort(
@@ -171,42 +182,46 @@ function pickInvergyHybrid(plantKw) {
   if (!lv.length) return null;
 
   const inv = lv[0];
-  return {
-    brand: "Invergy",
-    modelNo: inv.modelNo,
-    capacityKw: inv.capacityKw,
-    cost: inv.msp,
-    dcBusVoltage: parseInverterDcVoltage(inv.modelNo),
-    gstIncluded: true,
-  };
+  return attachInverterTax(
+    {
+      brand: "Invergy",
+      modelNo: inv.modelNo,
+      capacityKw: inv.capacityKw,
+      dcBusVoltage: parseInverterDcVoltage(inv.modelNo),
+    },
+    inv.msp,
+    true
+  );
 }
 
 function pickMicrotekOffGrid(plantKw) {
   const candidates = MICROTEK_OFFGRID_PWM.filter((i) => i.capacityKva >= plantKw).sort(
-    (a, b) => withMicrotekGst(a.priceExGst) - withMicrotekGst(b.priceExGst)
+    (a, b) => withInverterGst(a.priceExGst).cost - withInverterGst(b.priceExGst).cost
   );
 
   if (!candidates.length) {
     const fallback = MICROTEK_OFFGRID_PWM[MICROTEK_OFFGRID_PWM.length - 1];
-    return {
-      brand: "Microtek",
-      modelNo: fallback.model,
-      capacityKw: fallback.capacityKva,
-      cost: withMicrotekGst(fallback.priceExGst),
-      dcBusVoltage: parseInverterDcVoltage(fallback.voltage),
-      gstIncluded: false,
-    };
+    return attachInverterTax(
+      {
+        brand: "Microtek",
+        modelNo: fallback.model,
+        capacityKw: fallback.capacityKva,
+        dcBusVoltage: parseInverterDcVoltage(fallback.voltage),
+      },
+      fallback.priceExGst
+    );
   }
 
   const inv = candidates[0];
-  return {
-    brand: "Microtek",
-    modelNo: inv.model,
-    capacityKw: inv.capacityKva,
-    cost: withMicrotekGst(inv.priceExGst),
-    dcBusVoltage: parseInverterDcVoltage(inv.voltage),
-    gstIncluded: false,
-  };
+  return attachInverterTax(
+    {
+      brand: "Microtek",
+      modelNo: inv.model,
+      capacityKw: inv.capacityKva,
+      dcBusVoltage: parseInverterDcVoltage(inv.voltage),
+    },
+    inv.priceExGst
+  );
 }
 
 function pickInvergyOffGrid(plantKw) {
@@ -217,14 +232,16 @@ function pickInvergyOffGrid(plantKw) {
   if (!candidates.length) return null;
 
   const inv = candidates[0];
-  return {
-    brand: "Invergy",
-    modelNo: inv.modelNo,
-    capacityKw: inv.capacityKw,
-    cost: inv.msp,
-    dcBusVoltage: parseInverterDcVoltage(inv.modelNo),
-    gstIncluded: true,
-  };
+  return attachInverterTax(
+    {
+      brand: "Invergy",
+      modelNo: inv.modelNo,
+      capacityKw: inv.capacityKw,
+      dcBusVoltage: parseInverterDcVoltage(inv.modelNo),
+    },
+    inv.msp,
+    true
+  );
 }
 
 export function selectBestInverter(systemType, plantKw, { withBattery = false, inverterBrand = "Invergy" } = {}) {
@@ -271,23 +288,29 @@ export function selectBestBattery(brand, dcBusVoltage, minEnergyKwh = 0) {
   if (!compatible.length) return null;
 
   const sorted = compatible
-    .map((m) => ({
-      ...m,
-      brand,
-      energyKwh: parseFloat(m.size) || m.ah * m.voltage / 1000,
-      cost: m.price,
-    }))
+    .map((m) => {
+      const tax = withBatteryGst(m.price);
+      return {
+        ...m,
+        brand,
+        energyKwh: parseFloat(m.size) || (m.ah * m.voltage) / 1000,
+        ...tax,
+      };
+    })
     .filter((m) => m.energyKwh >= minEnergyKwh || minEnergyKwh === 0)
     .sort((a, b) => a.cost - b.cost);
 
   if (!sorted.length) {
     return compatible
-      .map((m) => ({
-        ...m,
-        brand,
-        energyKwh: parseFloat(String(m.size).replace(/KW/i, "")) || 1,
-        cost: m.price,
-      }))
+      .map((m) => {
+        const tax = withBatteryGst(m.price);
+        return {
+          ...m,
+          brand,
+          energyKwh: parseFloat(String(m.size).replace(/KW/i, "")) || 1,
+          ...tax,
+        };
+      })
       .sort((a, b) => a.cost - b.cost)[0];
   }
 

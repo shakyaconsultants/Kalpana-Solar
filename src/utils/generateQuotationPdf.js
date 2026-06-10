@@ -147,7 +147,8 @@ export async function buildQuotationPdf({ selections, breakdown, quoteRef = crea
     throw new Error("Invalid quote data");
   }
 
-  const { matched, finalPrice } = breakdown;
+  const { matched, finalPrice, taxes } = breakdown;
+  const hasBattery = !!taxes?.battery;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const margin = 14;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -162,38 +163,39 @@ export async function buildQuotationPdf({ selections, breakdown, quoteRef = crea
 
   const logoData = await loadLogoDataUrl();
   const headerY = 10;
+  const logoH = 22;
 
   doc.setFillColor(...BRAND.white);
-  doc.roundedRect(margin, headerY, 52, 24, 2, 2, "F");
-  doc.addImage(logoData, "PNG", margin + 2, headerY + 1, 48, 22);
+  doc.roundedRect(margin, headerY, 48, logoH, 2, 2, "F");
+  doc.addImage(logoData, "PNG", margin + 2, headerY + 1, 44, logoH - 2);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...BRAND.orange);
-  doc.text(COMPANY.name, pageWidth - margin, headerY + 8, { align: "right" });
+  doc.text(COMPANY.name, pageWidth - margin, headerY + 7, { align: "right" });
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(...BRAND.slate);
-  doc.text(COMPANY.tagline, pageWidth - margin, headerY + 14, { align: "right" });
-  doc.text(`${COMPANY.phone}  ·  ${COMPANY.email}`, pageWidth - margin, headerY + 19, { align: "right" });
+  doc.text(COMPANY.tagline, pageWidth - margin, headerY + 12, { align: "right" });
+  doc.text(`${COMPANY.phone}  ·  ${COMPANY.email}`, pageWidth - margin, headerY + 17, { align: "right" });
 
-  let y = 36;
+  let y = headerY + logoH + 10;
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.text);
   doc.text("Solar System Quotation", margin, y);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setTextColor(...BRAND.slate);
-  doc.text("Indicative estimate based on your selected configuration", margin, y + 7);
+  doc.text("Indicative estimate based on your selected configuration", margin, y + 6);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.text(formatDate(), margin, y + 14);
-  doc.text(`Ref: ${quoteRef}`, pageWidth - margin, y + 14, { align: "right" });
+  doc.setFontSize(9);
+  doc.text(formatDate(), margin, y + 12);
+  doc.text(`Ref: ${quoteRef}`, pageWidth - margin, y + 12, { align: "right" });
 
   y += 18;
   doc.setDrawColor(...BRAND.border);
@@ -201,8 +203,8 @@ export async function buildQuotationPdf({ selections, breakdown, quoteRef = crea
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
 
-  const PRICE_HEIGHT = 36;
-  const TERMS_HEIGHT = 52;
+  const PRICE_HEIGHT = hasBattery ? 50 : 44;
+  const TERMS_HEIGHT = 48;
   const SECTION_GAP = 10;
 
   const configRows = [
@@ -264,22 +266,35 @@ export async function buildQuotationPdf({ selections, breakdown, quoteRef = crea
   doc.setFillColor(...BRAND.dark);
   doc.roundedRect(margin, y, contentWidth, priceH, 3, 3, "F");
   doc.setFillColor(...BRAND.orange);
-  doc.rect(margin, y + 5, contentWidth, 1.2, "F");
+  doc.rect(margin, y + 4, contentWidth, 1.2, "F");
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(180, 190, 210);
-  doc.text("Estimated final price", margin + 8, y + 14);
+  doc.text("Estimated final price", margin + 8, y + 13);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(24);
   doc.setTextColor(...BRAND.white);
-  doc.text(formatINRForPdf(finalPrice), margin + 8, y + 28, { charSpace: 0 });
+  doc.text(formatINRForPdf(finalPrice), margin + 8, y + 26, { charSpace: 0 });
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(160, 170, 190);
-  doc.text("Inclusive of applicable taxes", pageWidth - margin - 8, y + 28, { align: "right" });
+  const invGstText = `Inverter GST (${taxes?.inverter?.rateLabel ?? "5%"}): ${formatINRForPdf(taxes?.inverter?.amount ?? 0)}`;
+  if (hasBattery) {
+    doc.text(invGstText, margin + 8, y + priceH - 8);
+    doc.text(
+      `Battery GST (${taxes.battery.rateLabel}): ${formatINRForPdf(taxes.battery.amount)}`,
+      margin + contentWidth / 2,
+      y + priceH - 8
+    );
+  } else {
+    doc.text(invGstText, margin + 8, y + priceH - 8);
+  }
+
+  doc.setFontSize(8.5);
+  doc.text("All taxes included in final price", pageWidth - margin - 8, y + 26, { align: "right" });
 
   y += priceH + SECTION_GAP;
 
@@ -292,7 +307,7 @@ export async function buildQuotationPdf({ selections, breakdown, quoteRef = crea
   const notes = [
     "This quotation is indicative and based on the configuration selected above.",
     "Final pricing is confirmed after a free site survey (structure, shading, and net metering).",
-    "Equipment models are matched for compatibility; exact SKUs may vary per stock availability.",
+    "Inverter is taxed at 5% GST; battery at 18% GST — both included in the estimated final price.",
     "Subsidy eligibility, if applicable, is subject to current government scheme rules.",
   ];
 

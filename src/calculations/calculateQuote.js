@@ -18,6 +18,7 @@ import {
   needsBattery,
 } from "./matching.js";
 import { resolveInverterBrand } from "../data/prices/inverterRules.js";
+import { GST } from "../data/prices/taxes.js";
 
 export function isValidSelections(selections) {
   const {
@@ -101,12 +102,28 @@ export function calculateQuoteBreakdown(selections) {
   const margin = Math.round(subtotal * MARGIN_RATE);
   const finalPrice = subtotal + margin;
 
+  const taxes = {
+    inverter: {
+      rate: GST.INVERTER_RATE,
+      rateLabel: "5%",
+      amount: inverter.gstAmount ?? 0,
+    },
+    battery: battery
+      ? {
+          rate: GST.BATTERY_RATE,
+          rateLabel: "18%",
+          amount: battery.gstAmount ?? 0,
+        }
+      : null,
+  };
+
   return {
     finalPrice,
     subtotal,
     margin,
     marginRate: MARGIN_RATE,
     components,
+    taxes,
     matched: {
       system: {
         plantLoadKw,

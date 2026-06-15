@@ -33,6 +33,7 @@ const BOM_CATEGORY_ORDER = [
 
 function bomCategory(item) {
   const d = item.description.toLowerCase();
+  if (d.includes("kit")) return "Solar Modules";
   if (d.includes("solar module") || (d.includes("module") && !d.includes("inverter"))) return "Solar Modules";
   if (d.includes("inverter")) return "Inverter";
   if (d.includes("battery")) return "Battery";
@@ -98,10 +99,12 @@ export function estimateProjectKpis(kwp) {
 
 export function panelKpiLabel(matched) {
   if (!matched?.panel) return "—";
+  if (matched.panel.isKit) return matched.kitLabel ?? "Tata Kit";
   return `${matched.panel.panelCount} × ${matched.panel.wattPerPanel}W`;
 }
 
 export function inverterKpiLabel(matched) {
+  if (matched?.isKit) return "Included in kit";
   if (!matched?.inverter) return "—";
   return `${matched.inverter.capacityKw}kW ${matched.inverter.brand}`;
 }

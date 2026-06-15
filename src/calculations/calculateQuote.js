@@ -19,6 +19,7 @@ import {
 } from "./matching.js";
 import { resolveInverterBrand } from "../data/prices/inverterRules.js";
 import { GST } from "../data/prices/taxes.js";
+import { TATA_BRAND, isTataBrand, isTataEligible, getTataKit } from "../data/prices/tata.js";
 
 export function isValidSelections(selections) {
   const {
@@ -28,22 +29,28 @@ export function isValidSelections(selections) {
     floors,
     wantsBattery,
     panelCompany,
-    panelCategory,
+    panelWatt,
     inverterBrand,
-    batteryBrand,
   } = selections;
 
-  if (!plantLoadKw || !installationType || !systemType || !panelCompany || !panelCategory) {
+  if (!plantLoadKw || !installationType || !systemType || !panelCompany) {
     return false;
   }
+
+  // Tata kit: complete On-Grid 3/4 kW package — no further configuration needed.
+  if (isTataBrand(panelCompany)) {
+    return isTataEligible(systemType, plantLoadKw);
+  }
+
+  if (!panelWatt) return false;
 
   if (needsWiring(systemType) && !floors) return false;
 
   if (!resolveInverterBrand(systemType, plantLoadKw, inverterBrand)) return false;
 
   if (systemType === "hybrid" || systemType === "off-grid") {
+    // Battery brand auto-follows the inverter; only the yes/no choice is required.
     if (wantsBattery == null) return false;
-    if (wantsBattery && !batteryBrand) return false;
   }
 
   return true;
@@ -63,18 +70,24 @@ function calculateCivilCost(plantKw) {
 export function calculateQuoteBreakdown(selections) {
   if (!isValidSelections(selections)) return null;
 
-  const { plantLoadKw, systemType, floors, wantsBattery, panelCompany, panelCategory, batteryBrand, inverterBrand } =
+  const { plantLoadKw, systemType, floors, wantsBattery, panelCompany, panelWatt, inverterBrand } =
     selections;
 
-  const panel = selectBestPanel(panelCompany, panelCategory, plantLoadKw, systemType);
+  // Tata kit — flat, all-inclusive price (no margin/GST/components added).
+  if (isTataBrand(panelCompany)) {
+    return buildTataKitBreakdown(selections);
+  }
+
+  const panel = selectBestPanel(panelCompany, panelWatt, plantLoadKw, systemType);
   if (!panel) return null;
 
   const resolvedInverterBrand = resolveInverterBrand(systemType, plantLoadKw, inverterBrand);
 
+  // Battery brand automatically follows the inverter brand.
   const { inverter, battery, error } = selectInverterAndBattery(
     systemType,
     plantLoadKw,
-    batteryBrand,
+    resolvedInverterBrand,
     wantsBattery,
     resolvedInverterBrand
   );
@@ -137,16 +150,15 @@ export function calculateQuoteBreakdown(selections) {
       },
       panel: {
         company: panelCompany,
-        category: panelCategory,
-        categoryLabel:
-          panelCategory === "topcon" ? "Topcon" : panelCategory === "bifacial" ? "Bifacial" : panelCategory,
+        category: panel.category,
         dcr: panel.dcr,
         dcrLabel: panel.dcrLabel,
         wattPerPanel: panel.wattPerPanel,
+        wattRangeLabel: panel.wattRangeLabel,
         panelCount: panel.panelCount,
         totalWatts: panel.totalWatts,
         totalKwp: Math.round((panel.totalWatts / 1000) * 100) / 100,
-        summary: `${panel.panelCount} × ${panel.wattPerPanel}W ${panelCompany} ${panelCategory === "topcon" ? "Topcon" : "Bifacial"} (${panel.dcrLabel})`,
+        summary: `${panel.panelCount} × ${panel.wattPerPanel}W ${panelCompany} (${panel.dcrLabel})`,
       },
       inverter: {
         brand: inverter.brand,
@@ -188,7 +200,53 @@ export function calculateQuoteBreakdown(selections) {
   };
 }
 
-/** Final customer price (with 25% margin) */
+/**
+ * Tata kit breakdown — flat all-inclusive price, no margin/GST/component math.
+ */
+function buildTataKitBreakdown(selections) {
+  const { plantLoadKw, systemType } = selections;
+  const kit = getTataKit(systemType, plantLoadKw);
+  if (!kit) return null;
+
+  const finalPrice = kit.price;
+
+  return {
+    finalPrice,
+    subtotal: finalPrice,
+    margin: 0,
+    marginRate: 0,
+    isKit: true,
+    kitLabel: kit.label,
+    components: null,
+    taxes: { inverter: null, battery: null },
+    matched: {
+      isKit: true,
+      kitLabel: kit.label,
+      system: {
+        plantLoadKw,
+        systemType,
+        floors: null,
+        panelTier: null,
+        panelTierRule: "Tata complete on-grid kit (factory bundled)",
+      },
+      panel: {
+        company: TATA_BRAND,
+        isKit: true,
+        totalKwp: plantLoadKw,
+        panelCount: null,
+        wattPerPanel: null,
+        summary: kit.label,
+      },
+      inverter: null,
+      battery: null,
+      compatibility: {},
+    },
+    plantLoadKw,
+    systemType,
+  };
+}
+
+/** Final customer price (with 25% margin, or flat kit price for Tata) */
 export function calculateQuote(selections) {
   return calculateQuoteBreakdown(selections)?.finalPrice ?? null;
 }

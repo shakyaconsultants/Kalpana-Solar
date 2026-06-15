@@ -1,7 +1,6 @@
 import { BRAND_LOGO_SRC, BRAND_LOGO_WIDTH, BRAND_LOGO_HEIGHT } from "../../assets/brandLogo.js";
 import { formatINR } from "../../data/formatCurrency.js";
 import { formatPlantLoad } from "../../data/quotationOptions.js";
-import { PANEL_CATEGORIES } from "../../data/quotationOptions.js";
 import {
   KALPANA_COMPANY,
   KALPANA_BANK,
@@ -28,10 +27,6 @@ import {
   paymentTimelineSteps,
   TOTAL_PAGES,
 } from "../../data/quotationDesign.js";
-
-function panelCategoryLabel(category) {
-  return PANEL_CATEGORIES.find((c) => c.id === category)?.label ?? category;
-}
 
 function IconSun({ className = "quote-icon-md" }) {
   return (
@@ -113,7 +108,7 @@ function WarrantyCard({ period, label }) {
 export default function QuotationPreviewDocument({ customer, selections, breakdown, quoteRef }) {
   const { matched, finalPrice } = breakdown;
   const kwp = matched?.panel?.totalKwp ?? selections.plantLoadKw;
-  const bom = buildBillOfMaterials(matched, selections, panelCategoryLabel);
+  const bom = buildBillOfMaterials(matched, selections);
   const bomGroups = groupBomByCategory(bom);
   const kpis = estimateProjectKpis(kwp);
   const timeline = paymentTimelineSteps();

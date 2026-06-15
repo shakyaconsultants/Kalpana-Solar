@@ -19,5 +19,15 @@ export {
 } from "./quotationOptions.js";
 
 export { formatINR } from "./formatCurrency.js";
-export { getAllowedInverterBrands, resolveInverterBrand } from "./prices/inverterRules.js";
+export {
+  getWattOptionsForSystem,
+  getWattOption,
+  PANEL_WATT_OPTIONS,
+} from "./prices/panels.js";
+export {
+  getAllowedInverterBrands,
+  getPreferredInverterBrand,
+  resolveInverterBrand,
+} from "./prices/inverterRules.js";
+export { TATA_BRAND, isTataBrand, isTataEligible, getTataKit } from "./prices/tata.js";
 export { calculateQuote, calculateQuoteBreakdown, isValidSelections } from "../calculations/calculateQuote.js";

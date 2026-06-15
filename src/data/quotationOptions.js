@@ -8,8 +8,9 @@ export const SYSTEM_TYPES = [
   { id: "off-grid", label: "Off-Grid", desc: "Standalone — optional battery storage" },
 ];
 
-export const PANEL_COMPANIES = ["Adani", "Waaree", "Vikram"];
+export const PANEL_COMPANIES = ["Adani", "Waaree", "Vikram", "Tata"];
 
+/** Retained for the quotation document label helper (not a form choice anymore) */
 export const PANEL_CATEGORIES = [
   { id: "topcon", label: "Topcon", desc: "High-efficiency N-type cells" },
   { id: "bifacial", label: "Bifacial", desc: "Dual-side energy capture" },

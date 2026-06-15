@@ -57,34 +57,44 @@ export const STANDARD_TERMS = [
   "The meter load should be adequate for the plant capacity; if less, the customer will have to increase the load.",
 ];
 
-/** Standard BOM items always listed (text only — no product images) */
+/**
+ * Standard BOM items always listed (text only — no product images).
+ * Key client-specified components (clearly stated):
+ *   • Havells / Polycab DC Wire — 4 mm
+ *   • Armoured AC Cable — 10 mm
+ *   • Earthing Alu-Green Wire — 16 mm (qty 3)
+ *   • Earthing Rod — 1 mtr (qty 3)
+ */
 export const STANDARD_BOM_ITEMS = [
-  { description: "Apollo Structure C-Channel", rating: "140×50", qty: "As per need" },
+  // ── Mounting structure ──
   { description: "Apollo Structure C-Channel", rating: "140×50", qty: "As per need" },
   { description: "Apollo Base Plate", rating: "140×140", qty: "As per need" },
   { description: "Fastener GI", rating: "—", qty: "As per need" },
-  { description: "AKG / Cap PVC Pipe", rating: "25 mm", qty: "As per need" },
-  { description: "WAACAB DC Cable", rating: "4 sqmm", qty: "As per need" },
-  { description: "Earthing Alu-Green", rating: "17 mm", qty: "3" },
-  { description: "LA-CB-Heavy with GI Pole", rating: "2 mtr", qty: "1" },
-  { description: "Copper Bonded Earthing Rod", rating: "—", qty: "As per need" },
-  { description: "Flexible Rigid Armoured Pipe", rating: "25 mm", qty: "As per need" },
-  { description: "PVC Saddle", rating: "16 mm", qty: "As per need" },
-  { description: "SS Washer", rating: "—", qty: "As per need" },
-  { description: "MC4 Connector", rating: "Pair", qty: "As per need" },
-  { description: "SS Nut Bolt Small", rating: "—", qty: "As per need" },
   { description: "SS Z Clamp + Spring", rating: "—", qty: "As per need" },
-  { description: "SS Nut Bolt Large", rating: "—", qty: "As per need" },
   { description: "SS Mid Clamp + Spring", rating: "—", qty: "As per need" },
-  { description: "Havells Lifeline / Polycab Green", rating: "4 sqmm", qty: "As per need" },
-  { description: "Tape", rating: "—", qty: "As per need" },
-  { description: "Tie Cable UV", rating: "300 mm", qty: "As per need" },
+  { description: "SS Nut Bolt (Small & Large)", rating: "—", qty: "As per need" },
+  { description: "SS Washer", rating: "—", qty: "As per need" },
+  { description: "Perlin Safety Cap", rating: "—", qty: "4" },
+
+  // ── Electrical / cabling ──
+  { description: "Havells / Polycab DC Wire", rating: "4 mm", qty: "As per need" },
+  { description: "Armoured AC Cable", rating: "10 mm", qty: "As per need" },
+  { description: "MC4 Connector", rating: "Pair", qty: "As per need" },
   { description: "Havells ACDB", rating: "1 Phase · 1 In 1 Out", qty: "1" },
   { description: "Havells DCDB", rating: "—", qty: "1" },
-  { description: "PVC Channel", rating: "45×45", qty: "1" },
-  { description: "Perlin Safety Cap", rating: "—", qty: "4" },
   { description: "Pin Type Lug", rating: "Copper", qty: "As per need" },
   { description: "Ring Type Lug", rating: "Copper", qty: "As per need" },
+  { description: "AKG / Cap PVC Pipe", rating: "25 mm", qty: "As per need" },
+  { description: "Flexible Rigid Armoured Pipe", rating: "25 mm", qty: "As per need" },
+  { description: "PVC Channel", rating: "45×45", qty: "1" },
+  { description: "PVC Saddle", rating: "16 mm", qty: "As per need" },
+  { description: "Tie Cable UV", rating: "300 mm", qty: "As per need" },
+  { description: "Tape", rating: "—", qty: "As per need" },
+
+  // ── Earthing & safety ──
+  { description: "Earthing Alu-Green Wire", rating: "16 mm", qty: "3" },
+  { description: "Earthing Rod", rating: "1 mtr", qty: "3" },
+  { description: "LA-CB-Heavy with GI Pole", rating: "2 mtr", qty: "1" },
 ];
 
 export function systemOfferLabel(systemType) {
@@ -106,16 +116,26 @@ export function commercialLineDescription(systemType) {
   return `Design, Supply, Installation, Testing and Commissioning of ${grid} ${metering}`;
 }
 
-export function buildBillOfMaterials(matched, selections, panelCategoryLabel) {
+export function buildBillOfMaterials(matched, selections) {
   const items = [];
   let sno = 1;
 
-  if (matched?.panel) {
+  if (matched?.panel?.isKit) {
+    // Tata complete kit — bundled supply line.
+    items.push({
+      sno: sno++,
+      description: matched.kitLabel ?? matched.panel.summary ?? "Tata Solar Kit",
+      rating: `${matched.system?.plantLoadKw ?? selections.plantLoadKw} kW`,
+      qty: "1",
+    });
+  } else if (matched?.panel) {
     const tier = matched.panel.dcrLabel ?? "DCR";
     items.push({
       sno: sno++,
-      description: `${selections.panelCompany} ${panelCategoryLabel(selections.panelCategory)} ${tier} Solar Module`,
-      rating: `${matched.panel.wattPerPanel} Wp`,
+      description: `${selections.panelCompany} Solar Module (${tier})`,
+      rating: matched.panel.wattRangeLabel
+        ? `${matched.panel.wattRangeLabel}`
+        : `${matched.panel.wattPerPanel} Wp`,
       qty: String(matched.panel.panelCount),
     });
   }
@@ -132,7 +152,7 @@ export function buildBillOfMaterials(matched, selections, panelCategoryLabel) {
   if (matched?.battery) {
     items.push({
       sno: sno++,
-      description: `${matched.battery.brand} Battery`,
+      description: `${matched.battery.brand} Lithium Battery`,
       rating: matched.battery.voltageLabel,
       qty: "1",
     });

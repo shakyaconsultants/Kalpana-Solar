@@ -36,8 +36,8 @@ export {
 
 export {
   INVERTER_SELECTION_RULES,
-  resolveOffGridInverterBrand,
   getAllowedInverterBrands,
+  getPreferredInverterBrand,
   resolveInverterBrand,
 } from "./inverterRules.js";
 

@@ -2,12 +2,11 @@
  * Equipment matching — minimum-cost compatible panel / inverter / battery selection.
  */
 
-import { getPanelConfigOptions, PANEL_GST_RATE } from "../data/prices/panels.js";
+import { getPanelConfig, PANEL_GST_RATE } from "../data/prices/panels.js";
 import { BATTERY_PRICES, BATTERY_BRAND_IDS, BATTERY_TYPES } from "../data/prices/batteries.js";
 import {
   INVERGY_ONGRID,
-  INVERGY_HYBRID_LV,
-  INVERGY_HYBRID_QUOTE_PRICES,
+  INVERGY_OFFGRID_OGH,
   INVERGY_OFFGRID_OG,
 } from "../data/prices/invergy.js";
 import { MICROTEK_OFFGRID_PWM, MICROTEK_OFFGRID_MAX_KW, MICROTEK_ONGRID_GTI, MICROTEK_HYBRID } from "../data/prices/microtek.js";
@@ -26,11 +25,13 @@ export function getVoltageBucket(voltage) {
 }
 
 export function parseInverterDcVoltage(modelNo = "") {
-  const m = modelNo.match(/(\d+)V/i);
+  const s = String(modelNo);
+  // Match the highest stated voltage first so ranges like "48-51.2V" resolve to 48.
+  if (/51\.2|48\s*-?\s*51|48\s*V|\b48\b/i.test(s)) return 48;
+  if (/25\.6|\b24\s*V?\b/i.test(s)) return 24;
+  if (/12\.8|\b12\s*V?\b/i.test(s)) return 12;
+  const m = s.match(/(\d+(?:\.\d+)?)\s*V/i);
   if (m) return getVoltageBucket(Number(m[1]));
-  if (/48V|51\.2/i.test(modelNo)) return 48;
-  if (/24V/i.test(modelNo)) return 24;
-  if (/12V/i.test(modelNo)) return 12;
   return null;
 }
 
@@ -47,32 +48,28 @@ function attachBatteryTax(fields, exGst) {
   return { ...fields, ...withBatteryGst(exGst) };
 }
 
-/** Cheapest panel layout for plant kW (DCR tier set by system type; best wattage among options) */
-export function selectBestPanel(company, category, plantKw, systemType) {
-  const options = getPanelConfigOptions(company, category, systemType);
-  if (!options.length) return null;
+/**
+ * Panel layout for plant kW using the customer-selected wattage option.
+ * Category (Topcon/Bifacial) and ₹/W rate are derived from the wattage; panel
+ * count is sized on the max watt of the range.
+ */
+export function selectBestPanel(company, wattId, plantKw, systemType) {
+  const cfg = getPanelConfig(company, wattId, systemType);
+  if (!cfg) return null;
 
-  let best = null;
   const targetW = plantKw * 1000;
+  const panelCount = Math.ceil(targetW / cfg.wattPerPanel);
+  const totalWatts = panelCount * cfg.wattPerPanel;
+  const exGst = totalWatts * cfg.pricePerWattExGst;
+  const cost = withPanelGst(exGst);
 
-  for (const opt of options) {
-    const panelCount = Math.ceil(targetW / opt.wattPerPanel);
-    const totalWatts = panelCount * opt.wattPerPanel;
-    const exGst = totalWatts * opt.pricePerWattExGst;
-    const cost = withPanelGst(exGst);
-
-    if (!best || cost < best.cost) {
-      best = {
-        ...opt,
-        panelCount,
-        totalWatts,
-        exGst: Math.round(exGst),
-        cost,
-      };
-    }
-  }
-
-  return best;
+  return {
+    ...cfg,
+    panelCount,
+    totalWatts,
+    exGst: Math.round(exGst),
+    cost,
+  };
 }
 
 function pickMicrotekOnGrid(plantKw, preferSinglePhase = true) {
@@ -157,31 +154,14 @@ function pickSmallestInvergyOnGrid(plantKw, preferSinglePhase = true) {
 }
 
 function pickInvergyHybrid(plantKw) {
-  const ogh = INVERGY_HYBRID_QUOTE_PRICES.filter((q) => q.capacityKw >= plantKw).sort(
-    (a, b) => a.priceExGst - b.priceExGst
-  );
-
-  if (ogh.length) {
-    const q = ogh[0];
-    return attachInverterTax(
-      {
-        brand: "Invergy",
-        modelNo: q.modelNo,
-        capacityKw: q.capacityKw,
-        dcBusVoltage: q.capacityKw <= 3 ? 24 : 24,
-        note: "OGH hybrid quote + GST",
-      },
-      q.priceExGst
-    );
-  }
-
-  const lv = INVERGY_HYBRID_LV.filter((i) => i.capacityKw >= plantKw && i.phase === "1P").sort(
+  // Off-Grid Hybrid (OGH) series from the official Invergy MSP list (GST-inclusive).
+  const candidates = INVERGY_OFFGRID_OGH.filter((i) => i.capacityKw >= plantKw).sort(
     (a, b) => a.msp - b.msp
   );
 
-  if (!lv.length) return null;
+  if (!candidates.length) return null;
 
-  const inv = lv[0];
+  const inv = candidates[0];
   return attachInverterTax(
     {
       brand: "Invergy",
@@ -346,21 +326,16 @@ export function selectInverterAndBattery(systemType, plantKw, batteryBrand, want
   const inverter = selectBestInverter(systemType, plantKw, { withBattery, inverterBrand });
   if (!inverter) return { inverter: null, battery: null };
 
-  if (!needsBattery(systemType, wantsBattery)) {
+  if (!withBattery) {
     return { inverter, battery: null };
   }
 
-  let battery = null;
+  // Battery brand automatically follows the inverter brand.
+  const brand = batteryBrand || inverterBrand;
+  const minKwh = systemType === "off-grid" ? plantKw * 0.3 : plantKw * 0.25;
+  const battery = brand ? selectBestBattery(brand, inverter.dcBusVoltage, minKwh) : null;
 
-  if (systemType === "off-grid") {
-    battery = batteryBrand
-      ? selectBestBattery(batteryBrand, inverter.dcBusVoltage, plantKw * 0.3)
-      : selectCheapestCompatibleBattery(inverter.dcBusVoltage, plantKw);
-  } else if (batteryBrand && inverter.dcBusVoltage) {
-    battery = selectBestBattery(batteryBrand, inverter.dcBusVoltage, plantKw * 0.25);
-  }
-
-  if (needsBattery(systemType, wantsBattery) && !battery) {
+  if (!battery) {
     return { inverter, battery: null, error: "No compatible battery for selected inverter voltage" };
   }
 

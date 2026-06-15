@@ -1,7 +1,12 @@
 /**
- * Battery prices — Kalpana Solar rate sheet (Sheet2).
- * Stored separately from panels and inverters.
- * Prices are as listed on sheet (INR).
+ * Battery prices — LITHIUM ONLY.
+ * Pricing strictly from the two official supplier lists:
+ *   • Microtek (Jaganlite) price list — lithium battery, ex-GST.
+ *   • Invergy LFP price list (W.E.F Oct 25) — MSP, ex-GST.
+ * 18% GST is applied at calculation time (see taxes.js).
+ *
+ * The battery brand is NOT chosen by the customer — it automatically follows
+ * the selected inverter brand.
  */
 
 export const BATTERY_BRAND_IDS = {
@@ -13,33 +18,18 @@ export const BATTERY_TYPES = {
   LITHIUM: "lithium",
 };
 
-/** Kalpana quote list — primary source for the quotation form */
+/**
+ * One lithium model per voltage bucket (12 / 24 / 48-51.2 V) per brand, so the
+ * battery can be matched automatically to the inverter DC bus voltage.
+ */
 export const BATTERY_PRICES = {
   microtek: {
     label: "Microtek",
     chemistry: BATTERY_TYPES.LITHIUM,
     models: [
-      {
-        id: "1.28kw",
-        size: "1.28KW",
-        voltage: 12.8,
-        ah: 100,
-        price: 19000,
-      },
-      {
-        id: "2.56kw",
-        size: "2.56KW",
-        voltage: 25.6,
-        ah: 100,
-        price: 38000,
-      },
-      {
-        id: "5.12kw",
-        size: "5.12KW",
-        voltage: 51.2,
-        ah: 100,
-        price: 76000,
-      },
+      { id: "1.28kw", size: "1.28KW", modelNo: "1280 WH", voltage: 12.8, ah: 100, price: 16000 },
+      { id: "2.56kw", size: "2.56KW", modelNo: "2560 WH", voltage: 25.6, ah: 100, price: 32000 },
+      { id: "5.12kw", size: "5.12KW", modelNo: "5120 WH", voltage: 51.2, ah: 100, price: 64000 },
     ],
   },
 
@@ -47,32 +37,15 @@ export const BATTERY_PRICES = {
     label: "Invergy",
     chemistry: BATTERY_TYPES.LITHIUM,
     models: [
-      { id: "0.96kw", size: "0.96KW", voltage: 12, ah: 80, price: 12000 },
-      { id: "1.2kw", size: "1.2KW", voltage: 12, ah: 100, price: 16000 },
-      { id: "1.8kw", size: "1.8KW", voltage: 12, ah: 150, price: 23000 },
-      { id: "2.4kw-12", size: "2.4KW", voltage: 12, ah: 200, price: 29000 },
-      { id: "2.4kw-24", size: "2.4KW", voltage: 24, ah: 100, price: 30000 },
-      { id: "4.8kw", size: "4.8KW", voltage: 24, ah: 200, price: 53000 },
+      { id: "1.2kw", size: "1.2KW", modelNo: "INV LFP 12100-TB", voltage: 12, ah: 100, price: 15349 },
+      { id: "2.4kw", size: "2.4KW", modelNo: "INV LFP 24100-TB", voltage: 24, ah: 100, price: 29463 },
       {
         id: "5.12kw-wall",
         size: "5.12KW-WALL MOUNT",
+        modelNo: "INV (EU)-5.0 W01-51.2",
         voltage: 51.2,
         ah: 100,
-        price: 82000,
-      },
-      {
-        id: "5.12kw-floor",
-        size: "5.12KW-FLOOR MOUNT",
-        voltage: 51.2,
-        ah: 100,
-        price: 84500,
-      },
-      {
-        id: "5.12kw-stack",
-        size: "5.12KW-STACKABLE",
-        voltage: 51.2,
-        ah: 100,
-        price: 85000,
+        price: 70000,
       },
     ],
   },
@@ -90,7 +63,7 @@ export function getBatteryById(brand, modelId) {
   return BATTERY_PRICES[brandId]?.models.find((m) => m.id === modelId) ?? null;
 }
 
-/** Default model (first listed) when form only selects brand */
+/** Default model (mid-range) when only the brand is known */
 export function getBatteryPrice(brand, modelId) {
   const brandId = BATTERY_BRAND_IDS[brand];
   if (!brandId) return null;
@@ -100,7 +73,7 @@ export function getBatteryPrice(brand, modelId) {
 
   const model = modelId
     ? entry.models.find((m) => m.id === modelId)
-    : entry.models[Math.floor(entry.models.length / 2)]; // mid-range default for estimate
+    : entry.models[Math.floor(entry.models.length / 2)];
 
   if (!model) return null;
 

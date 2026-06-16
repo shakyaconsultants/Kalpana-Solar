@@ -1,4 +1,3 @@
-import { BRAND_LOGO_SRC, BRAND_LOGO_WIDTH, BRAND_LOGO_HEIGHT } from "../../assets/brandLogo.js";
 import { formatINR } from "../../data/formatCurrency.js";
 import { formatPlantLoad } from "../../data/quotationOptions.js";
 import {
@@ -27,6 +26,7 @@ import {
   paymentTimelineSteps,
   TOTAL_PAGES,
 } from "../../data/quotationDesign.js";
+import QuoteDocLogo from "./QuoteDocLogo.jsx";
 
 function IconSun({ className = "quote-icon-md" }) {
   return (
@@ -56,7 +56,7 @@ function IconLeaf({ className = "quote-icon-md" }) {
 function DocFooter({ page, quoteRef }) {
   return (
     <footer className="quote-doc-footer">
-      <img src={BRAND_LOGO_SRC} alt="" className="quote-doc-footer-logo" width={BRAND_LOGO_WIDTH} height={BRAND_LOGO_HEIGHT} />
+      <QuoteDocLogo variant="footer" className="quote-doc-footer-logo" />
       <div className="quote-doc-footer-meta">
         <span>{KALPANA_COMPANY.mobile}</span>
         <span className="quote-footer-sep">·</span>
@@ -127,7 +127,7 @@ export default function QuotationPreviewDocument({ customer, selections, breakdo
 
         <div className="quote-cover-top">
           <div className="quote-cover-logo-wrap">
-            <img src={BRAND_LOGO_SRC} alt={KALPANA_COMPANY.name} width={BRAND_LOGO_WIDTH} height={BRAND_LOGO_HEIGHT} />
+            <QuoteDocLogo variant="cover" alt={KALPANA_COMPANY.name} />
           </div>
           <p className="quote-cover-company">{KALPANA_COMPANY.name}</p>
           <p className="quote-cover-tagline">{QUOTE_TAGLINE}</p>
@@ -189,7 +189,7 @@ export default function QuotationPreviewDocument({ customer, selections, breakdo
               </p>
             </div>
             <div className="quote-page-header-logo">
-              <img src={BRAND_LOGO_SRC} alt="" width={BRAND_LOGO_WIDTH} height={BRAND_LOGO_HEIGHT} />
+              <QuoteDocLogo variant="header" />
             </div>
           </div>
 
@@ -293,7 +293,7 @@ export default function QuotationPreviewDocument({ customer, selections, breakdo
             <p className="quote-page-header-sub">Complete bill of materials for your solar system</p>
           </div>
           <div className="quote-page-header-logo">
-            <img src={BRAND_LOGO_SRC} alt="" width={BRAND_LOGO_WIDTH} height={BRAND_LOGO_HEIGHT} />
+            <QuoteDocLogo variant="header" />
           </div>
         </div>
 
@@ -333,7 +333,7 @@ export default function QuotationPreviewDocument({ customer, selections, breakdo
             <p className="quote-page-header-sub">Your investment protection & project terms</p>
           </div>
           <div className="quote-page-header-logo">
-            <img src={BRAND_LOGO_SRC} alt="" width={BRAND_LOGO_WIDTH} height={BRAND_LOGO_HEIGHT} />
+            <QuoteDocLogo variant="header" />
           </div>
         </div>
 

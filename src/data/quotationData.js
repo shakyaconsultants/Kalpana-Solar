@@ -21,12 +21,16 @@ export {
 export { formatINR } from "./formatCurrency.js";
 export {
   getWattOptionsForSystem,
+  getWattOptionsForCompany,
+  getPanelCompaniesForSelection,
   getWattOption,
   PANEL_WATT_OPTIONS,
+  STANDARD_PANEL_COMPANIES,
 } from "./prices/panels.js";
 export {
   getAllowedInverterBrands,
   getPreferredInverterBrand,
+  getPreferredInverterDescription,
   resolveInverterBrand,
 } from "./prices/inverterRules.js";
 export { TATA_BRAND, isTataBrand, isTataEligible, getTataKit } from "./prices/tata.js";

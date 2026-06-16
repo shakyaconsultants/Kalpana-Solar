@@ -18,12 +18,8 @@ export const GST = {
   /** Invergy MSP / list prices are GST-inclusive per supplier sheet */
   INVERGY_LIST_GST_INCLUDED: true,
 
-  /**
-   * Kalpana quote prices for INV-OGH hybrid models are ex-GST;
-   * 5% GST is added on top of these amounts.
-   */
-  INVERGY_OGH_QUOTE_EX_GST: true,
-  INVERGY_OGH_QUOTE_GST_RATE: 0.05,
+  /** All Invergy MSP / Kalpana quote prices are GST-inclusive — never add GST on top */
+  INVERGY_PRICES_GST_INCLUDED: true,
 };
 
 export function addGstToBase(exGst, rate) {

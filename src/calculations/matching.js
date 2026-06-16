@@ -56,8 +56,11 @@ function attachInverterTax(fields, exGst, gstIncluded = false) {
   return { ...fields, ...tax };
 }
 
-function attachBatteryTax(fields, exGst) {
-  return { ...fields, ...withBatteryGst(exGst) };
+function attachBatteryTax(fields, listPrice, gstIncluded = false) {
+  const tax = gstIncluded
+    ? splitInclusiveGst(listPrice, GST.BATTERY_RATE)
+    : withBatteryGst(listPrice);
+  return { ...fields, ...tax };
 }
 
 /** Inverter rated kW/kVA must meet panel kWp (small tolerance for rounding). */
@@ -172,7 +175,7 @@ function pickSmallestInvergyOnGrid(requiredKw, preferSinglePhase = true) {
 
 function pickInvergyHybrid(requiredKw) {
   const quote = INVERGY_HYBRID_QUOTE_PRICES.filter((q) => inverterMeetsRequired(q.capacityKw, requiredKw)).sort(
-    (a, b) => a.priceExGst - b.priceExGst
+    (a, b) => a.msp - b.msp
   );
 
   if (quote.length) {
@@ -185,7 +188,8 @@ function pickInvergyHybrid(requiredKw) {
         dcBusVoltage:
           q.dcBusVoltage ?? parseInverterDcVoltage(q.modelNo) ?? (q.capacityKw <= 5 ? 24 : 48),
       },
-      q.priceExGst
+      q.msp,
+      true
     );
   }
 
@@ -295,10 +299,13 @@ export function selectBestBattery(brand, dcBusVoltage, plantKw) {
   if (!catalog || catalog.chemistry !== BATTERY_TYPES.LITHIUM) return null;
 
   const models = catalog.models ?? [];
+  const gstIncluded = brand === "Invergy";
   const compatible = models
     .filter((m) => getVoltageBucket(m.voltage) === bucket)
     .map((m) => {
-      const tax = withBatteryGst(m.price);
+      const tax = gstIncluded
+        ? splitInclusiveGst(m.price, GST.BATTERY_RATE)
+        : withBatteryGst(m.price);
       return {
         ...m,
         brand,

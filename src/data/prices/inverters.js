@@ -38,6 +38,7 @@ export {
   INVERTER_SELECTION_RULES,
   getAllowedInverterBrands,
   getPreferredInverterBrand,
+  getPreferredInverterDescription,
   resolveInverterBrand,
 } from "./inverterRules.js";
 

@@ -1,9 +1,9 @@
 /**
  * Battery prices — LITHIUM ONLY.
  * Pricing strictly from the two official supplier lists:
- *   • Microtek (Jaganlite) price list — lithium battery, ex-GST.
- *   • Invergy LFP price list (W.E.F Oct 25) — MSP, ex-GST.
- * 18% GST is applied at calculation time (see taxes.js).
+ *   • Microtek (Jaganlite) price list — lithium battery, ex-GST (+ 18% GST at calc).
+ *   • Invergy LFP price list (W.E.F Oct 25) — MSP, GST-inclusive (no extra GST).
+ * GST is applied at calculation time (see matching.js / taxes.js).
  *
  * The battery brand is NOT chosen by the customer — it automatically follows
  * the selected inverter brand.
@@ -27,9 +27,9 @@ export const BATTERY_PRICES = {
     label: "Microtek",
     chemistry: BATTERY_TYPES.LITHIUM,
     models: [
-      { id: "1.28kw", size: "1.28KW", modelNo: "1280 WH", voltage: 12.8, ah: 100, price: 16000 },
-      { id: "2.56kw", size: "2.56KW", modelNo: "2560 WH", voltage: 25.6, ah: 100, price: 32000 },
-      { id: "5.12kw", size: "5.12KW", modelNo: "5120 WH", voltage: 51.2, ah: 100, price: 64000 },
+      { id: "1.2kw", size: "1.2KW", modelNo: "1280 WH · 12V 100Ah", voltage: 12.8, ah: 100, price: 16000 },
+      { id: "2.4kw", size: "2.4KW", modelNo: "2560 WH · 24V 100Ah", voltage: 25.6, ah: 100, price: 32000 },
+      { id: "5kw", size: "5KW", modelNo: "5120 WH · 51.2V 100Ah", voltage: 51.2, ah: 100, price: 64000 },
     ],
   },
 

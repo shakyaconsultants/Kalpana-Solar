@@ -13,21 +13,19 @@ export const INVERGY_META = {
 };
 
 /**
- * Kalpana quote override — Hybrid OGH models (ex-GST + 5% GST at calculation).
+ * Kalpana quote override — Hybrid OGH models (GST-inclusive, no extra GST added).
  * These override MSP for quotation when matched by capacity.
  */
 export const INVERGY_HYBRID_QUOTE_PRICES = [
   {
     modelNo: "INV-OGH-3.0K",
     capacityKw: 3,
-    priceExGst: 35200,
-    gstRate: 0.05,
+    msp: 35200,
   },
   {
     modelNo: "INV-OGH-5.0K",
     capacityKw: 5,
-    priceExGst: 48000,
-    gstRate: 0.05,
+    msp: 48000,
   },
 ];
 

@@ -1,10 +1,14 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import {
+  BRAND_LOGO_ASPECT,
+  getBrandLogoDataUrl,
+} from "../assets/brandLogo.js";
 
 /** A4 at 96 CSS dpi — matches 210mm × 297mm */
 export const A4_PX_WIDTH = 794;
 export const A4_PX_HEIGHT = 1123;
-export const PDF_CAPTURE_VERSION = 3;
+export const PDF_CAPTURE_VERSION = 5;
 
 export function createQuoteReference() {
   const d = new Date();
@@ -37,7 +41,7 @@ async function waitForImages(root) {
     images.map(
       (img) =>
         new Promise((resolve) => {
-          if (img.complete) {
+          if (img.complete && img.naturalWidth > 0) {
             resolve();
             return;
           }
@@ -48,51 +52,64 @@ async function waitForImages(root) {
   );
 }
 
-function blobToDataUrl(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+function logoBox(heightMm) {
+  const h = heightMm;
+  const w = h * BRAND_LOGO_ASPECT;
+  return { w, h };
 }
 
-async function imageSrcToDataUrl(src) {
-  const absoluteUrl = new URL(src, window.location.href).href;
-  const response = await fetch(absoluteUrl, { cache: "no-cache" });
-  if (!response.ok) {
-    throw new Error(`Unable to load image for PDF: ${absoluteUrl}`);
+/** Draw logos with jsPDF — bypasses html2canvas image bugs entirely. */
+function stampPdfLogos(doc, pageIndex, logoDataUrl, pageW, pageH) {
+  if (!logoDataUrl) return;
+
+  if (pageIndex === 0) {
+    const cover = logoBox(14);
+    doc.addImage(
+      logoDataUrl,
+      "PNG",
+      (pageW - cover.w) / 2,
+      14,
+      cover.w,
+      cover.h,
+      undefined,
+      "FAST"
+    );
+  } else {
+    const header = logoBox(9);
+    doc.addImage(
+      logoDataUrl,
+      "PNG",
+      pageW - header.w - 10,
+      8,
+      header.w,
+      header.h,
+      undefined,
+      "FAST"
+    );
   }
-  return blobToDataUrl(await response.blob());
-}
 
-async function inlineImagesAsDataUrls(sourceRoot, cloneRoot) {
-  const sourceImages = [...sourceRoot.querySelectorAll("img")];
-  const cloneImages = [...cloneRoot.querySelectorAll("img")];
-
-  await Promise.all(
-    cloneImages.map(async (cloneImg, index) => {
-      const sourceImg = sourceImages[index];
-      const src = sourceImg?.currentSrc || sourceImg?.src || cloneImg.currentSrc || cloneImg.src;
-      if (!src || src.startsWith("data:")) return;
-
-      try {
-        cloneImg.src = await imageSrcToDataUrl(src);
-      } catch {
-        // Keep the original URL as a fallback; waitForImages will still let capture continue.
-        cloneImg.src = src;
-      }
-    })
+  const footer = logoBox(5.5);
+  doc.addImage(
+    logoDataUrl,
+    "PNG",
+    8,
+    pageH - footer.h - 5,
+    footer.w,
+    footer.h,
+    undefined,
+    "FAST"
   );
 }
 
 /**
- * Snapshot the FULL resolved computed style onto the clone so the capture is a
- * pixel-faithful copy of the on-screen layout (no reflow, no lost sizing).
- * Computed values for colors are already resolved to rgb(), so Tailwind v4
- * oklch values never reach html2canvas. Any stray oklch/oklab is skipped.
+ * Snapshot resolved computed styles (rgb only) onto the clone.
+ * Skips logo nodes — they are hidden and stamped separately.
  */
 function inlineElementStyles(source, target) {
+  if (source.closest?.("[data-quote-logo]") || source.hasAttribute?.("data-quote-logo")) {
+    return;
+  }
+
   const computed = window.getComputedStyle(source);
   let css = "";
   for (let i = 0; i < computed.length; i++) {
@@ -115,10 +132,12 @@ function inlineTreeStyles(sourceRoot, cloneRoot) {
   }
 }
 
-/** html2canvas parses stylesheet rules for class selectors — Tailwind v4 emits oklch. */
 function stripClassNames(root) {
   root.removeAttribute("class");
-  root.querySelectorAll("*").forEach((el) => el.removeAttribute("class"));
+  root.querySelectorAll("*").forEach((el) => {
+    if (el.hasAttribute("data-quote-logo")) return;
+    el.removeAttribute("class");
+  });
 }
 
 function injectCaptureFonts(doc) {
@@ -129,9 +148,61 @@ function injectCaptureFonts(doc) {
   doc.head.appendChild(link);
 }
 
-/**
- * Capture in an isolated iframe with inlined rgb styles — avoids html2canvas oklch parse errors.
- */
+/** Plain CSS injected into capture iframe — no Tailwind / oklch. */
+function injectCaptureFixStyles(doc) {
+  const style = doc.createElement("style");
+  style.textContent = `
+    [data-quote-logo] { visibility: hidden !important; opacity: 0 !important; }
+    .quote-cover-logo-wrap { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+    .quote-exec-card {
+      column-count: 1 !important;
+      -webkit-column-count: 1 !important;
+    }
+    .quote-page-balanced {
+      justify-content: flex-start !important;
+      gap: 8px !important;
+    }
+    .quote-page-balanced .quote-section { margin-bottom: 6px !important; }
+    .quote-page-balanced .quote-exec-card {
+      font-size: 8px !important;
+      line-height: 1.45 !important;
+      padding: 8px 10px !important;
+    }
+    .quote-page-balanced .quote-pricing-amount { font-size: 28px !important; }
+    .quote-page-balanced .quote-kpi-card { padding: 8px 6px !important; }
+    .quote-page-header-logo {
+      width: 100px !important;
+      height: 32px !important;
+      flex-shrink: 0 !important;
+      overflow: hidden !important;
+    }
+    .quote-preview-page-body { overflow: hidden !important; }
+    .quote-cover-inner { justify-content: flex-start !important; gap: 12px !important; }
+  `;
+  doc.head.appendChild(style);
+}
+
+function patchCloneLayout(clone, pageIndex) {
+  clone.querySelectorAll("[data-quote-logo]").forEach((el) => {
+    el.style.setProperty("visibility", "hidden", "important");
+    el.style.setProperty("opacity", "0", "important");
+  });
+
+  clone.querySelectorAll(".quote-exec-card").forEach((el) => {
+    el.style.setProperty("column-count", "1", "important");
+    el.style.setProperty("-webkit-column-count", "1", "important");
+  });
+
+  if (pageIndex === 1) {
+    clone.querySelectorAll(".quote-page-balanced .quote-kpi-grid").forEach((el) => {
+      el.style.setProperty("gap", "6px", "important");
+    });
+    clone.querySelectorAll(".quote-page2-split").forEach((el) => {
+      el.style.setProperty("gap", "6px", "important");
+    });
+  }
+}
+
 async function capturePageToCanvas(pageEl, pageIndex) {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
@@ -151,17 +222,14 @@ async function capturePageToCanvas(pageEl, pageIndex) {
   );
   iframeDoc.close();
   injectCaptureFonts(iframeDoc);
+  injectCaptureFixStyles(iframeDoc);
 
   const clone = pageEl.cloneNode(true);
-  await inlineImagesAsDataUrls(pageEl, clone);
 
-  // Snapshot the on-screen layout onto the clone, then drop classes so
-  // html2canvas never parses Tailwind v4 oklch rules from the stylesheet.
   inlineTreeStyles(pageEl, clone);
   stripClassNames(clone);
+  patchCloneLayout(clone, pageIndex);
 
-  // Pin the page to an exact A4 pixel box (after inlining) so each page maps
-  // 1:1 onto one PDF page — no scrollHeight squish, no overflow onto others.
   clone.style.setProperty("width", `${A4_PX_WIDTH}px`, "important");
   clone.style.setProperty("height", `${A4_PX_HEIGHT}px`, "important");
   clone.style.setProperty("min-height", `${A4_PX_HEIGHT}px`, "important");
@@ -170,9 +238,10 @@ async function capturePageToCanvas(pageEl, pageIndex) {
   clone.style.setProperty("margin", "0", "important");
   clone.style.setProperty("box-shadow", "none", "important");
   clone.style.setProperty("border-radius", "0", "important");
+  clone.style.setProperty("display", "flex", "important");
+  clone.style.setProperty("flex-direction", "column", "important");
 
   iframeDoc.body.appendChild(clone);
-  await waitForImages(clone);
   await waitForPreviewReady();
 
   try {
@@ -180,7 +249,7 @@ async function capturePageToCanvas(pageEl, pageIndex) {
       html2canvas(clone, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         logging: false,
         backgroundColor: "#ffffff",
         width: A4_PX_WIDTH,
@@ -211,8 +280,12 @@ async function capturePreviewToPdf(filename) {
     throw new Error("No quotation pages found in preview.");
   }
 
+  const logoDataUrl = await getBrandLogoDataUrl();
+
   root.classList.add("quote-pdf-capture-mode");
   await waitForPreviewReady();
+  await waitForImages(root);
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -229,6 +302,7 @@ async function capturePreviewToPdf(filename) {
 
       const imgData = canvas.toDataURL("image/png");
       doc.addImage(imgData, "PNG", 0, 0, pageW, pageH);
+      stampPdfLogos(doc, i, logoDataUrl, pageW, pageH);
     }
   } finally {
     root.classList.remove("quote-pdf-capture-mode");

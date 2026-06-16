@@ -2,16 +2,17 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import {
   INSTALLATION_TYPES,
   SYSTEM_TYPES,
-  PANEL_COMPANIES,
   PLANT_LOAD_OPTIONS,
   FLOOR_OPTIONS,
   formatINR,
   systemNeedsWiring,
   calculateQuoteBreakdown,
   isValidSelections,
-  getWattOptionsForSystem,
+  getWattOptionsForCompany,
+  getPanelCompaniesForSelection,
   getAllowedInverterBrands,
   getPreferredInverterBrand,
+  getPreferredInverterDescription,
   resolveInverterBrand,
   isTataBrand,
   isTataEligible,
@@ -155,6 +156,7 @@ function OptionCards({ options, value, onChange, columns = 2, compact = false })
         const id = typeof opt === "string" ? opt : opt.id;
         const label = typeof opt === "string" ? opt : opt.label;
         const desc = typeof opt === "string" ? null : opt.desc;
+        const preferred = typeof opt === "string" ? false : !!opt.preferred;
         const selected = value === id;
 
         return (
@@ -162,16 +164,25 @@ function OptionCards({ options, value, onChange, columns = 2, compact = false })
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            className={`text-left rounded-xl border transition-all ${
+            className={`text-left rounded-xl border transition-all relative ${
               compact ? "p-3" : "p-3.5"
             } ${
               selected
-                ? "border-kalpana-500 bg-kalpana-50 ring-1 ring-kalpana-500/20"
+                ? preferred
+                  ? "border-kalpana-500 bg-kalpana-50 ring-2 ring-kalpana-500/30"
+                  : "border-kalpana-500 bg-kalpana-50 ring-1 ring-kalpana-500/20"
+                : preferred
+                ? "border-amber-400 bg-amber-50/60 ring-1 ring-amber-400/40 hover:border-amber-500"
                 : "border-slate-200 bg-white hover:border-kalpana-300 hover:bg-kalpana-50/30"
             }`}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className={`font-semibold text-sm ${selected ? "text-kalpana-600" : "text-slate-800"}`}>
+            {preferred && (
+              <span className="absolute -top-2 left-3 inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                Preferred
+              </span>
+            )}
+            <div className={`flex items-center justify-between gap-2 ${preferred ? "mt-1" : ""}`}>
+              <span className={`font-semibold text-sm ${selected ? "text-kalpana-600" : preferred ? "text-amber-900" : "text-slate-800"}`}>
                 {label}
               </span>
               <span
@@ -274,9 +285,17 @@ export default function QuotationGenerator() {
   const isTata = isTataBrand(panelCompany);
   const tataEligible = isTataEligible(systemType, plantLoadKw);
 
+  const panelCompanyOptions = useMemo(
+    () => getPanelCompaniesForSelection(systemType, plantLoadKw),
+    [systemType, plantLoadKw]
+  );
+
   const wattOptions = useMemo(
-    () => (systemType && !isTata ? getWattOptionsForSystem(systemType) : []),
-    [systemType, isTata]
+    () =>
+      systemType && panelCompany && !isTata
+        ? getWattOptionsForCompany(panelCompany, systemType)
+        : [],
+    [systemType, panelCompany, isTata]
   );
 
   const allowedInverterBrands = useMemo(
@@ -296,19 +315,26 @@ export default function QuotationGenerator() {
 
   const showBatteryQuestion = !isTata && (systemType === "hybrid" || systemType === "off-grid");
   const showFloorQuestion = !isTata && (systemType === "on-grid" || systemType === "hybrid");
-  const showWattSelector = !isTata && !!systemType;
+  const showWattSelector = !isTata && !!systemType && !!panelCompany;
   const showInverter = !isTata && !!systemType && plantLoadKw != null;
 
-  // Auto-resolve the wattage option when the system type changes (off-grid has only one).
+  // Drop panel company when it is no longer offered (e.g. Tata outside on-grid 3/4 kW).
   useEffect(() => {
-    if (!systemType || isTata) return;
-    const opts = getWattOptionsForSystem(systemType);
+    if (!systemType && plantLoadKw == null) return;
+    const allowed = getPanelCompaniesForSelection(systemType, plantLoadKw);
+    setPanelCompany((prev) => (prev && allowed.includes(prev) ? prev : ""));
+  }, [systemType, plantLoadKw]);
+
+  // Auto-resolve wattage when company or system type changes.
+  useEffect(() => {
+    if (!systemType || !panelCompany || isTataBrand(panelCompany)) return;
+    const opts = getWattOptionsForCompany(panelCompany, systemType);
     if (opts.length === 1) {
       setPanelWatt(opts[0].id);
     } else {
       setPanelWatt((prev) => (opts.some((o) => o.id === prev) ? prev : null));
     }
-  }, [systemType, isTata]);
+  }, [systemType, panelCompany]);
 
   // Drop the chosen inverter brand if it is no longer allowed for the configuration.
   useEffect(() => {
@@ -433,7 +459,11 @@ export default function QuotationGenerator() {
   const inverterOptions = allowedInverterBrands.map((b) => ({
     id: b,
     label: b,
-    desc: b === preferredInverterBrand ? "Preferred — lower price" : "Alternative",
+    preferred: b === preferredInverterBrand,
+    desc:
+      b === preferredInverterBrand
+        ? getPreferredInverterDescription(systemType, plantLoadKw)
+        : "Alternative — you may still select this brand",
   }));
 
   const wattCardOptions = wattOptions.map((o) => ({
@@ -580,27 +610,25 @@ export default function QuotationGenerator() {
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
                       Panel Company
                     </p>
-                    <OptionCards
-                      options={PANEL_COMPANIES}
-                      value={panelCompany}
-                      onChange={setPanelCompany}
-                      columns={3}
-                      compact
-                    />
+                    {panelCompanyOptions.length === 0 ? (
+                      <InfoNote>Select plant load and system type first.</InfoNote>
+                    ) : (
+                      <OptionCards
+                        options={panelCompanyOptions}
+                        value={panelCompany}
+                        onChange={setPanelCompany}
+                        columns={3}
+                        compact
+                      />
+                    )}
                   </div>
 
-                  {isTata && (
-                    tataEligible ? (
-                      <InfoNote>
-                        Complete pre-engineered <strong>Tata on-grid kit</strong> — panels, inverter and accessories
-                        are bundled at a fixed price. No further configuration needed.
-                      </InfoNote>
-                    ) : (
-                      <InfoNote tone="warn">
-                        The Tata kit is available only for <strong>On-Grid 3 kW or 4 kW</strong>. Select on-grid and a
-                        3 kW / 4 kW plant load, or choose another panel company.
-                      </InfoNote>
-                    )
+                  {isTata && tataEligible && (
+                    <InfoNote>
+                      Complete pre-engineered <strong>Tata on-grid kit</strong> — panels, inverter and accessories are
+                      bundled at a fixed price (₹2,00,000 for 3 kW · ₹2,50,000 for 4 kW). No further configuration
+                      needed.
+                    </InfoNote>
                   )}
 
                   {showWattSelector && (
@@ -608,10 +636,13 @@ export default function QuotationGenerator() {
                       <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
                         Module Wattage
                       </p>
-                      {wattCardOptions.length === 1 ? (
+                      {wattCardOptions.length === 0 ? (
+                        <InfoNote tone="warn">No module wattage available for this company and system type.</InfoNote>
+                      ) : wattCardOptions.length === 1 ? (
                         <InfoNote>
                           <span className="font-semibold text-kalpana-700">{wattCardOptions[0].label}</span>{" "}
-                          ({wattCardOptions[0].desc}) — auto-applied for off-grid (Topcon, Non-DCR).
+                          ({wattCardOptions[0].desc}) — only option for {panelCompany}
+                          {systemType === "off-grid" ? " off-grid (Topcon, Non-DCR)" : ""}.
                         </InfoNote>
                       ) : (
                         <OptionCards
@@ -632,7 +663,7 @@ export default function QuotationGenerator() {
                   <SectionTitle
                     step={nextStep()}
                     title="Inverter Brand"
-                    subtitle="Both brands shown — the cheaper one is marked Preferred"
+                    subtitle="Both brands available — preferred option is highlighted; you may choose either"
                   />
                   {inverterOptions.length === 0 ? (
                     <InfoNote>Select plant load and system type first.</InfoNote>

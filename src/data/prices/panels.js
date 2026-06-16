@@ -1,5 +1,5 @@
 /**
- * Solar panel specs & rates — Adani / Waaree / Vikram.
+ * Solar panel specs & rates — Adani / Waaree / Vikram / Premier.
  * DCR & Non-DCR rates from Kalpana rate sheet (₹/W ex-GST).
  * 5% GST applied at calculation time (see taxes.js).
  *
@@ -13,11 +13,17 @@
  *   Topcon   600–630 → priced @ 630 W
  *
  * System-type rules:
- *   On-grid & Hybrid → DCR panels; Bifacial (555) + Topcon (590, 630) all offered.
+ *   On-grid & Hybrid → DCR panels.
  *   Off-grid         → Non-DCR panels; Topcon 600–630 (630 W) only.
+ *
+ * Company availability (form + pricing):
+ *   Adani / Waaree  → DCR: 555, 590, 630 · Off-grid: 630
+ *   Vikram / Premier → DCR: 555 (Bifacial) only · Off-grid: 630 (Topcon)
+ *   Tata kit        → On-grid 3 kW / 4 kW only (see tata.js)
  */
 
 import { GST } from "./taxes.js";
+import { TATA_BRAND, isTataEligible } from "./tata.js";
 
 export const PANEL_COMPANY_IDS = {
   Adani: "adani",
@@ -89,6 +95,20 @@ export const PANEL_WATT_OPTIONS = [
 /** Off-grid only uses the 600–630 Topcon panel */
 export const OFFGRID_WATT_ID = 630;
 
+/** Standard panel brands (excluding Tata kit) */
+export const STANDARD_PANEL_COMPANIES = ["Adani", "Waaree", "Vikram", "Premier"];
+
+/**
+ * Which watt option IDs each company actually supplies.
+ * Adani/Waaree → all options for the system tier; Vikram/Premier → Bifacial 555 on DCR only.
+ */
+export const COMPANY_WATT_IDS = {
+  Adani: null,
+  Waaree: null,
+  Vikram: { dcr: [555], nonDcr: [630] },
+  Premier: { dcr: [555], nonDcr: [630] },
+};
+
 /** Off-grid → Non-DCR; on-grid & hybrid → DCR */
 export function useDcrPanels(systemType) {
   return systemType === "on-grid" || systemType === "hybrid";
@@ -98,13 +118,35 @@ export function getWattOption(wattId) {
   return PANEL_WATT_OPTIONS.find((o) => o.id === Number(wattId)) ?? null;
 }
 
-/** Wattage options available for a given system type */
+/** Wattage options available for a given system type (before company filter) */
 export function getWattOptionsForSystem(systemType) {
   if (!systemType) return [];
   if (systemType === "off-grid") {
     return PANEL_WATT_OPTIONS.filter((o) => o.id === OFFGRID_WATT_ID);
   }
   return PANEL_WATT_OPTIONS;
+}
+
+/** Panel companies shown in the form for the current system type + plant load */
+export function getPanelCompaniesForSelection(systemType, plantLoadKw) {
+  const companies = [...STANDARD_PANEL_COMPANIES];
+  if (isTataEligible(systemType, plantLoadKw)) {
+    companies.push(TATA_BRAND);
+  }
+  return companies;
+}
+
+/** Wattage options available for a company + system type combination */
+export function getWattOptionsForCompany(company, systemType) {
+  const systemOpts = getWattOptionsForSystem(systemType);
+  if (!company || !systemType) return [];
+
+  const restriction = COMPANY_WATT_IDS[company];
+  if (!restriction) return systemOpts;
+
+  const tier = useDcrPanels(systemType) ? "dcr" : "nonDcr";
+  const allowedIds = restriction[tier] ?? [];
+  return systemOpts.filter((o) => allowedIds.includes(o.id));
 }
 
 /**
@@ -118,8 +160,8 @@ export function getPanelConfig(company, wattId, systemType) {
   const opt = getWattOption(wattId);
   if (!opt) return null;
 
-  // Off-grid only offers the 600–630 Topcon panel
-  if (systemType === "off-grid" && opt.id !== OFFGRID_WATT_ID) return null;
+  const companyOpts = getWattOptionsForCompany(company, systemType);
+  if (!companyOpts.some((o) => o.id === opt.id)) return null;
 
   const dcr = useDcrPanels(systemType);
   const tier = dcr ? PANEL_RATES_EX_GST.dcr : PANEL_RATES_EX_GST.nonDcr;

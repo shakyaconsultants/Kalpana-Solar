@@ -71,8 +71,7 @@
   height: 20px;
   width: auto;
   max-width: 80px;
-  object-fit: contain;
-  opacity: 0.95;
+  flex-shrink: 0;
 }
 
 .quote-doc-footer-meta {
@@ -216,6 +215,8 @@
 
 .quote-cover-logo-wrap {
   @apply inline-flex items-center justify-center mx-auto;
+  min-height: 56px;
+  min-width: 140px;
   padding: 16px 20px;
   background: #fff;
   border-radius: 16px;
@@ -225,10 +226,9 @@
 
 .quote-cover-logo-wrap img {
   display: block;
-  max-height: 56px;
-  max-width: 140px;
+  height: 56px;
   width: auto;
-  height: auto;
+  max-width: 140px;
   object-fit: contain;
 }
 
@@ -386,10 +386,22 @@
   margin-top: 2px;
 }
 
+.quote-page-header-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  width: 100px;
+  min-height: 32px;
+  overflow: hidden;
+}
+
 .quote-page-header-logo img {
-  max-height: 32px;
+  height: 32px;
   width: auto;
+  max-width: 100px;
   object-fit: contain;
+  display: block;
 }
 
 /* ─── KPI Cards ─── */
@@ -705,6 +717,54 @@
   gap: 0;
   background: #fff;
   border: none;
+}
+
+/* PDF capture — prevent logo blow-up and column-layout glitches in html2canvas */
+.quote-pdf-capture-mode .quote-page-header-logo {
+  width: 100px;
+  height: 32px;
+  overflow: hidden;
+}
+
+.quote-pdf-capture-mode .quote-page-header-logo img {
+  height: 32px !important;
+  width: auto !important;
+  max-width: 100px !important;
+}
+
+.quote-pdf-capture-mode .quote-cover-logo-wrap img {
+  height: 56px !important;
+  width: auto !important;
+  max-width: 140px !important;
+}
+
+.quote-pdf-capture-mode .quote-doc-footer-logo {
+  height: 20px !important;
+  width: auto !important;
+  max-width: 80px !important;
+}
+
+.quote-pdf-capture-mode .quote-exec-card {
+  column-count: 1;
+}
+
+.quote-pdf-capture-mode .quote-page-balanced {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.quote-pdf-capture-mode .quote-page-balanced .quote-section {
+  margin-bottom: 8px;
+}
+
+.quote-pdf-capture-mode .quote-cover-inner {
+  justify-content: flex-start;
+  gap: 14px;
+  padding-top: 6px;
+}
+
+.quote-pdf-capture-mode .quote-cover-logo-wrap {
+  box-shadow: none;
 }
 
 .quote-commercial-table {

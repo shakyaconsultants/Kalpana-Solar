@@ -32,7 +32,25 @@ export function getAllowedInverterBrands(systemType, _plantKw = null) {
   return [];
 }
 
-/** The recommended (cheaper) brand to default-select for a configuration */
+/** Short UI label for why a brand is preferred */
+export function getPreferredInverterDescription(systemType, plantKw = null) {
+  if (systemType === "on-grid") {
+    return "Preferred for residential on-grid";
+  }
+  if (systemType === "hybrid") {
+    return plantKw != null && plantKw <= 3
+      ? "Preferred for hybrid up to 3 kW"
+      : "Preferred for hybrid above 3 kW";
+  }
+  if (systemType === "off-grid") {
+    return plantKw != null && plantKw <= MICROTEK_OFFGRID_PWM_MAX_KW
+      ? "Preferred for off-grid up to 4 kW"
+      : "Preferred for off-grid above 4 kW";
+  }
+  return "Preferred option";
+}
+
+/** The recommended brand to default-select for a configuration */
 export function getPreferredInverterBrand(systemType, plantKw = null) {
   if (systemType === "on-grid") return "Invergy";
 

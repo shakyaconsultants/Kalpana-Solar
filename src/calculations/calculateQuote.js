@@ -81,12 +81,13 @@ export function calculateQuoteBreakdown(selections) {
   const panel = selectBestPanel(panelCompany, panelWatt, plantLoadKw, systemType);
   if (!panel) return null;
 
+  const panelKwp = Math.round((panel.totalWatts / 1000) * 100) / 100;
   const resolvedInverterBrand = resolveInverterBrand(systemType, plantLoadKw, inverterBrand);
 
-  // Battery brand automatically follows the inverter brand.
   const { inverter, battery, error } = selectInverterAndBattery(
     systemType,
     plantLoadKw,
+    panelKwp,
     resolvedInverterBrand,
     wantsBattery,
     resolvedInverterBrand
@@ -185,8 +186,8 @@ export function calculateQuoteBreakdown(selections) {
           }
         : null,
       compatibility: {
-        panelToLoad: `${panel.panelCount} panels (${panel.totalKwp} kWp) sized for ${plantLoadKw} kW load`,
-        inverterToLoad: `${inverter.capacityKw} kW inverter covers ${plantLoadKw} kW required`,
+        panelToLoad: `${panel.panelCount} panels (${panelKwp} kWp) sized for ${plantLoadKw} kW load`,
+        inverterToLoad: `${inverter.capacityKw} kW inverter covers ${panelKwp} kWp panel array (${plantLoadKw} kW load)`,
         batteryToInverter:
           battery && inverter.dcBusVoltage
             ? `${battery.voltage}V battery ↔ ${inverter.dcBusVoltage}V inverter — compatible`

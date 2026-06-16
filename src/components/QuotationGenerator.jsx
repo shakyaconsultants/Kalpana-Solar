@@ -487,7 +487,7 @@ export default function QuotationGenerator() {
                 <SectionTitle
                   step={nextStep()}
                   title="Plant Load"
-                  subtitle="Required system capacity (2 – 10 kW)"
+                  subtitle="Required system capacity (1 – 10 kW)"
                 />
                 <FormDropdown
                   value={plantLoadKw}
@@ -584,7 +584,7 @@ export default function QuotationGenerator() {
                       options={PANEL_COMPANIES}
                       value={panelCompany}
                       onChange={setPanelCompany}
-                      columns={4}
+                      columns={3}
                       compact
                     />
                   </div>

@@ -1,16 +1,14 @@
 /**
  * Inverter brand rules (client business rules).
  *
- * Both brands (Invergy & Microtek) are offered; the cheaper / recommended one
- * is flagged as "preferred":
+ * Both brands (Invergy & Microtek) are always offered for off-grid; the cheaper /
+ * recommended one is flagged as "preferred":
  *   • On-grid (Residential): Invergy preferred, Microtek alternative.
  *   • Hybrid:                Microtek preferred @ 3 kW, Invergy preferred from 4 kW.
- *   • Off-grid (Commercial): Microtek preferred up to 4 kW, Invergy from 5 kW.
- *
- * Microtek has no off-grid product above 4 kW, so only Invergy is offered there.
+ *   • Off-grid (Commercial): Microtek preferred up to 4 kW, Invergy preferred from 5 kW.
  */
 
-export const MICROTEK_OFFGRID_MAX_KW = 4;
+export const MICROTEK_OFFGRID_PWM_MAX_KW = 4;
 
 export const INVERTER_SELECTION_RULES = {
   "on-grid": {
@@ -22,25 +20,16 @@ export const INVERTER_SELECTION_RULES = {
     note: "Hybrid — Microtek preferred up to 3 kW, Invergy from 4 kW",
   },
   "off-grid": {
-    microtekMaxKw: MICROTEK_OFFGRID_MAX_KW,
-    note: "Off-Grid — Microtek preferred up to 4 kW, Invergy from 5 kW",
+    note: "Off-Grid — Microtek preferred up to 4 kW (PWM), MPPT above; Invergy preferred from 5 kW",
   },
 };
 
-/** Brands the customer may choose for a given system size */
-export function getAllowedInverterBrands(systemType, plantKw = null) {
-  const rule = INVERTER_SELECTION_RULES[systemType];
-  if (!rule) return [];
-
-  if (systemType === "off-grid") {
-    // No Microtek off-grid product above 4 kW
-    if (plantKw != null && plantKw > rule.microtekMaxKw) {
-      return ["Invergy"];
-    }
-    return ["Microtek", "Invergy"];
+/** Both brands are always selectable — preferred is marked in the UI only */
+export function getAllowedInverterBrands(systemType, _plantKw = null) {
+  if (systemType === "on-grid" || systemType === "hybrid" || systemType === "off-grid") {
+    return ["Invergy", "Microtek"];
   }
-
-  return rule.allowedBrands;
+  return [];
 }
 
 /** The recommended (cheaper) brand to default-select for a configuration */
@@ -52,7 +41,7 @@ export function getPreferredInverterBrand(systemType, plantKw = null) {
   }
 
   if (systemType === "off-grid") {
-    return plantKw != null && plantKw <= MICROTEK_OFFGRID_MAX_KW ? "Microtek" : "Invergy";
+    return plantKw != null && plantKw <= MICROTEK_OFFGRID_PWM_MAX_KW ? "Microtek" : "Invergy";
   }
 
   return null;

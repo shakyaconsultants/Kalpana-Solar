@@ -8,7 +8,7 @@ export const SYSTEM_TYPES = [
   { id: "off-grid", label: "Off-Grid", desc: "Standalone — optional battery storage" },
 ];
 
-export const PANEL_COMPANIES = ["Adani", "Waaree", "Vikram", "Tata"];
+export const PANEL_COMPANIES = ["Adani", "Waaree", "Vikram", "Premier", "Tata"];
 
 /** Retained for the quotation document label helper (not a form choice anymore) */
 export const PANEL_CATEGORIES = [
@@ -20,10 +20,10 @@ export const INVERTER_BRANDS = ["Invergy", "Microtek"];
 
 export const BATTERY_BRANDS = ["Microtek", "Invergy"];
 
-/** Plant load options: 2 kW → 10 kW in 0.5 kW steps */
-export const PLANT_LOAD_MIN_KW = 2;
+/** Plant load options: 1 kW → 10 kW (integer steps only) */
+export const PLANT_LOAD_MIN_KW = 1;
 export const PLANT_LOAD_MAX_KW = 10;
-export const PLANT_LOAD_STEP_KW = 0.5;
+export const PLANT_LOAD_STEP_KW = 1;
 
 export const PLANT_LOAD_OPTIONS = buildPlantLoadOptions(
   PLANT_LOAD_MIN_KW,

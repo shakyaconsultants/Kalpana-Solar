@@ -23,19 +23,21 @@ export const PANEL_COMPANY_IDS = {
   Adani: "adani",
   Waaree: "waaree",
   Vikram: "vikram",
+  Premier: "premier",
 };
 
-/** Adani & Waaree share the same ₹/W rates on the sheet */
+/** Adani & Waaree share the same ₹/W rates on the sheet; Vikram & Premier share Vikram rates */
 export const PANEL_PRICE_GROUP = {
   Adani: "adani_waaree",
   Waaree: "adani_waaree",
   Vikram: "vikram",
+  Premier: "vikram",
 };
 
 /**
  * ₹/W ex-GST — from Kalpana rate sheet.
- *   DCR     → Topcon: Adani/Waaree 29, Vikram 27 · Bifacial: Adani/Waaree 27, Vikram 25
- *   Non-DCR → Topcon: Adani/Waaree 17, Vikram 16 · (no Bifacial in Non-DCR)
+ *   DCR     → Topcon: Adani/Waaree 29, Vikram/Premier 27 · Bifacial: Adani/Waaree 27, Vikram/Premier 25
+ *   Non-DCR → Topcon: Adani/Waaree 17, Vikram/Premier 16 · (no Bifacial in Non-DCR)
  */
 export const PANEL_RATES_EX_GST = {
   dcr: {

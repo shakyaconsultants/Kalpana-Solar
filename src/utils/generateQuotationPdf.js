@@ -4,7 +4,7 @@ import { jsPDF } from "jspdf";
 /** A4 at 96 CSS dpi — matches 210mm × 297mm */
 export const A4_PX_WIDTH = 794;
 export const A4_PX_HEIGHT = 1123;
-export const PDF_CAPTURE_VERSION = 2;
+export const PDF_CAPTURE_VERSION = 3;
 
 export function createQuoteReference() {
   const d = new Date();
@@ -86,104 +86,23 @@ async function inlineImagesAsDataUrls(sourceRoot, cloneRoot) {
   );
 }
 
-/** Properties to inline — computed values are rgb/hex (not oklch). */
-const INLINE_PROPS = [
-  "display",
-  "position",
-  "top",
-  "left",
-  "right",
-  "bottom",
-  "width",
-  "height",
-  "min-width",
-  "min-height",
-  "max-width",
-  "max-height",
-  "margin",
-  "margin-top",
-  "margin-right",
-  "margin-bottom",
-  "margin-left",
-  "padding",
-  "padding-top",
-  "padding-right",
-  "padding-bottom",
-  "padding-left",
-  "flex",
-  "flex-direction",
-  "flex-wrap",
-  "flex-grow",
-  "flex-shrink",
-  "flex-basis",
-  "align-items",
-  "align-self",
-  "justify-content",
-  "gap",
-  "row-gap",
-  "column-gap",
-  "grid-template-columns",
-  "grid-template-rows",
-  "grid-column",
-  "grid-row",
-  "overflow",
-  "overflow-x",
-  "overflow-y",
-  "box-sizing",
-  "border-radius",
-  "border",
-  "border-top",
-  "border-right",
-  "border-bottom",
-  "border-left",
-  "border-color",
-  "border-width",
-  "border-style",
-  "box-shadow",
-  "opacity",
-  "z-index",
-  "color",
-  "background",
-  "background-color",
-  "background-image",
-  "background-size",
-  "background-position",
-  "background-repeat",
-  "font-family",
-  "font-size",
-  "font-weight",
-  "font-style",
-  "line-height",
-  "letter-spacing",
-  "text-align",
-  "text-transform",
-  "text-decoration",
-  "white-space",
-  "column-count",
-  "column-gap",
-  "object-fit",
-  "vertical-align",
-  "transform",
-  "transform-origin",
-];
-
+/**
+ * Snapshot the FULL resolved computed style onto the clone so the capture is a
+ * pixel-faithful copy of the on-screen layout (no reflow, no lost sizing).
+ * Computed values for colors are already resolved to rgb(), so Tailwind v4
+ * oklch values never reach html2canvas. Any stray oklch/oklab is skipped.
+ */
 function inlineElementStyles(source, target) {
   const computed = window.getComputedStyle(source);
-  for (const prop of INLINE_PROPS) {
-    let value = computed.getPropertyValue(prop);
-    if (!value || value === "initial" || value === "auto") continue;
-    if (value.includes("oklch") || value.includes("oklab")) {
-      if (prop === "color" || prop.endsWith("color")) {
-        value = computed.color;
-      } else if (prop.startsWith("background")) {
-        value = computed.backgroundColor;
-      } else {
-        continue;
-      }
-    }
+  let css = "";
+  for (let i = 0; i < computed.length; i++) {
+    const prop = computed[i];
+    const value = computed.getPropertyValue(prop);
+    if (!value) continue;
     if (value.includes("oklch") || value.includes("oklab")) continue;
-    target.style.setProperty(prop, value);
+    css += `${prop}:${value};`;
   }
+  target.style.cssText = css;
 }
 
 function inlineTreeStyles(sourceRoot, cloneRoot) {
@@ -236,25 +155,25 @@ async function capturePageToCanvas(pageEl, pageIndex) {
   const clone = pageEl.cloneNode(true);
   await inlineImagesAsDataUrls(pageEl, clone);
 
+  // Snapshot the on-screen layout onto the clone, then drop classes so
+  // html2canvas never parses Tailwind v4 oklch rules from the stylesheet.
+  inlineTreeStyles(pageEl, clone);
+  stripClassNames(clone);
+
+  // Pin the page to an exact A4 pixel box (after inlining) so each page maps
+  // 1:1 onto one PDF page — no scrollHeight squish, no overflow onto others.
   clone.style.setProperty("width", `${A4_PX_WIDTH}px`, "important");
   clone.style.setProperty("height", `${A4_PX_HEIGHT}px`, "important");
-  clone.style.setProperty("max-height", `${A4_PX_HEIGHT}px`, "important");
   clone.style.setProperty("min-height", `${A4_PX_HEIGHT}px`, "important");
+  clone.style.setProperty("max-height", `${A4_PX_HEIGHT}px`, "important");
   clone.style.setProperty("overflow", "hidden", "important");
   clone.style.setProperty("margin", "0", "important");
   clone.style.setProperty("box-shadow", "none", "important");
   clone.style.setProperty("border-radius", "0", "important");
 
-  inlineTreeStyles(pageEl, clone);
-  stripClassNames(clone);
-
   iframeDoc.body.appendChild(clone);
   await waitForImages(clone);
   await waitForPreviewReady();
-
-  const captureHeight = Math.ceil(
-    Math.max(A4_PX_HEIGHT, clone.scrollHeight, clone.getBoundingClientRect().height)
-  );
 
   try {
     return await withTimeout(
@@ -265,9 +184,9 @@ async function capturePageToCanvas(pageEl, pageIndex) {
         logging: false,
         backgroundColor: "#ffffff",
         width: A4_PX_WIDTH,
-        height: captureHeight,
+        height: A4_PX_HEIGHT,
         windowWidth: A4_PX_WIDTH,
-        windowHeight: captureHeight,
+        windowHeight: A4_PX_HEIGHT,
         scrollX: 0,
         scrollY: 0,
         foreignObjectRendering: false,

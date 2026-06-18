@@ -1,6 +1,6 @@
 /**
- * Labour, wiring, civil & other service charges — separate from equipment prices.
- * Per-watt lines use total installed panel watts (or plant kW × 1000 for Tata kits).
+ * Labour, wiring, civil & service charges — separate from equipment prices.
+ * Profit margin is a flat ₹ amount by plant load (not a %), see CLIENT_MARGIN.
  */
 
 export const WIRING = {
@@ -33,24 +33,57 @@ export const CIVIL_WORK = {
   pricePerWatt: 0.4,
 };
 
-/** Profit margin — plant load ≤ 5 kW → 25%; above 5 kW → 15% */
-export const MARGIN = {
-  thresholdKw: 5,
-  rateUpTo5Kw: 0.25,
-  rateAbove5Kw: 0.15,
+export const MISCELLANEOUS = {
+  label: "Devices misc",
+  amount: 5000,
 };
 
-/** @deprecated use getMarginRate(plantLoadKw) */
-export const MARGIN_RATE = MARGIN.rateUpTo5Kw;
+export const EQUIPMENT = {
+  label: "Paperwork misc",
+  amount: 5000,
+};
 
-export function getMarginRate(plantLoadKw) {
-  if (plantLoadKw == null) return MARGIN.rateUpTo5Kw;
-  return plantLoadKw > MARGIN.thresholdKw ? MARGIN.rateAbove5Kw : MARGIN.rateUpTo5Kw;
+/**
+ * Client profit margin — flat ₹ by plant load (NOT a percentage).
+ * Replaces old 25% / 15% margin on subtotal.
+ *
+ *   2 kW → ₹30,000 · 3 kW → ₹35,000 · 4 kW → ₹40,000 · 5 kW → ₹45,000
+ *   6 kW → ₹50,000 … +₹5,000 per kW through 10 kW → ₹70,000
+ */
+export const CLIENT_MARGIN = {
+  label: "Profit margin (flat by plant load)",
+  byKw: {
+    1: 25000,
+    2: 30000,
+    3: 35000,
+    4: 40000,
+    5: 45000,
+    6: 50000,
+    7: 55000,
+    8: 60000,
+    9: 65000,
+    10: 70000,
+    11: 75000,
+  },
+};
+
+export function getClientMargin(plantLoadKw) {
+  if (plantLoadKw == null) return 0;
+  const kw = Math.round(plantLoadKw);
+  if (CLIENT_MARGIN.byKw[kw] != null) return CLIENT_MARGIN.byKw[kw];
+  if (kw >= 2) return kw * 5000 + 20000;
+  return 25000;
+}
+
+/** @deprecated no longer a % — use getClientMargin(plantLoadKw) */
+export const MARGIN_RATE = 0;
+
+export function getMarginRate() {
+  return 0;
 }
 
 export function getMarginRateLabel(plantLoadKw) {
-  const rate = getMarginRate(plantLoadKw);
-  return `${Math.round(rate * 100)}%`;
+  return `Flat ${getClientMargin(plantLoadKw).toLocaleString("en-IN")}`;
 }
 
 export function calculatePerWattServiceCost(pricePerWatt, totalWatts) {
@@ -72,12 +105,8 @@ export function calculateWiringCost(systemType, floors) {
   return rate * floors;
 }
 
-export const MISCELLANEOUS = {
-  label: "Devices misc",
-  amount: 5000,
-};
-
-export const EQUIPMENT = {
-  label: "Paperwork misc",
-  amount: 5000,
-};
+/** @deprecated alias — was misnamed as service fee */
+export const CLIENT_SERVICE_FEE = CLIENT_MARGIN;
+export function getClientServiceFee(plantLoadKw) {
+  return getClientMargin(plantLoadKw);
+}

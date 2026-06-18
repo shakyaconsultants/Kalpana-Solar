@@ -1,6 +1,6 @@
 /**
  * Tata bundled solar kit — On-Grid 3 kW / 4 kW base kit price (rate list).
- * Installation, wiring, misc charges and profit margin are added in calculateQuote.js.
+ * Services and flat profit margin by plant kW are added in calculateQuote.js.
  */
 
 export const TATA_BRAND = "Tata";

@@ -637,9 +637,8 @@ export default function QuotationGenerator() {
 
                   {isTata && tataEligible && (
                     <InfoNote>
-                      Complete pre-engineered <strong>Tata on-grid kit</strong> — base kit from rate list
-                      (₹2,00,000 for 3 kW · ₹2,50,000 for 4 kW) plus installation, wiring, misc charges and{" "}
-                      <strong>25% profit margin</strong>.
+                      Complete pre-engineered <strong>Tata on-grid kit</strong> — kit price from rate list
+                      plus installation/services and flat profit margin by plant load (e.g. 3 kW margin ₹35,000).
                     </InfoNote>
                   )}
 

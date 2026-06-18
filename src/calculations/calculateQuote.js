@@ -1,5 +1,5 @@
 /**
- * Full quotation calculation — minimum compatible equipment + margin.
+ * Full quotation calculation — equipment + services + flat client margin by kW.
  */
 
 import {
@@ -10,7 +10,7 @@ import {
   INSTALLATION_MATERIAL,
   MISCELLANEOUS,
   EQUIPMENT,
-  getMarginRate,
+  getClientMargin,
   getMarginRateLabel,
   needsWiring,
 } from "../data/prices/services.js";
@@ -70,27 +70,22 @@ export function isValidSelections(selections) {
   return true;
 }
 
-function calculateInstallationCost(totalWatts) {
-  return calculatePerWattServiceCost(INSTALLATION.pricePerWatt, totalWatts);
-}
-
-function calculateInstallationMaterialCost(totalWatts) {
-  return calculatePerWattServiceCost(INSTALLATION_MATERIAL.pricePerWatt, totalWatts);
-}
-
-function calculateCivilCost(totalWatts) {
-  return calculatePerWattServiceCost(CIVIL_WORK.pricePerWatt, totalWatts);
-}
-
 function buildServiceComponents(totalWatts, systemType, floors) {
   return {
     wiring: calculateWiringCost(systemType, floors),
-    installation: calculateInstallationCost(totalWatts),
-    installationMaterial: calculateInstallationMaterialCost(totalWatts),
-    civil: calculateCivilCost(totalWatts),
+    installation: calculatePerWattServiceCost(INSTALLATION.pricePerWatt, totalWatts),
+    installationMaterial: calculatePerWattServiceCost(
+      INSTALLATION_MATERIAL.pricePerWatt,
+      totalWatts
+    ),
+    civil: calculatePerWattServiceCost(CIVIL_WORK.pricePerWatt, totalWatts),
     miscellaneous: MISCELLANEOUS.amount,
     equipment: EQUIPMENT.amount,
   };
+}
+
+function sumServiceComponents(serviceComponents) {
+  return Object.values(serviceComponents).reduce((s, v) => s + (v ?? 0), 0);
 }
 
 /**
@@ -140,17 +135,19 @@ export function calculateQuoteBreakdown(selections) {
   if (needsBattery(systemType, wantsBattery) && !battery) return null;
 
   const serviceComponents = buildServiceComponents(panel.totalWatts, systemType, floors);
-  const marginRate = getMarginRate(plantLoadKw);
+  const servicesSubtotal = sumServiceComponents(serviceComponents);
+  const margin = getClientMargin(plantLoadKw);
 
   const components = {
     panels: panel.cost,
     inverter: inverter.cost,
     battery: battery?.cost ?? 0,
     ...serviceComponents,
+    margin,
   };
 
-  const subtotal = Object.values(components).reduce((s, v) => s + (v ?? 0), 0);
-  const margin = Math.round(subtotal * marginRate);
+  const equipmentSubtotal = panel.cost + inverter.cost + (battery?.cost ?? 0);
+  const subtotal = equipmentSubtotal + servicesSubtotal;
   const finalPrice = subtotal + margin;
 
   const taxes = {
@@ -176,8 +173,10 @@ export function calculateQuoteBreakdown(selections) {
   return {
     finalPrice,
     subtotal,
+    equipmentSubtotal,
+    servicesSubtotal,
     margin,
-    marginRate,
+    marginRate: 0,
     marginRateLabel: getMarginRateLabel(plantLoadKw),
     components,
     taxes,
@@ -246,7 +245,7 @@ export function calculateQuoteBreakdown(selections) {
   };
 }
 
-/** Tata kit — base kit price + standard service lines + conditional profit margin */
+/** Tata kit — kit price + services + flat margin by kW */
 function buildTataKitBreakdown(selections) {
   const { plantLoadKw, systemType, floors } = selections;
   const kit = getTataKit(systemType, plantLoadKw);
@@ -254,22 +253,26 @@ function buildTataKitBreakdown(selections) {
 
   const kitWatts = plantLoadKw * 1000;
   const serviceComponents = buildServiceComponents(kitWatts, systemType, floors);
-  const marginRate = getMarginRate(plantLoadKw);
+  const servicesSubtotal = sumServiceComponents(serviceComponents);
+  const margin = getClientMargin(plantLoadKw);
 
   const components = {
     kit: kit.price,
     ...serviceComponents,
+    margin,
   };
 
-  const subtotal = Object.values(components).reduce((s, v) => s + (v ?? 0), 0);
-  const margin = Math.round(subtotal * marginRate);
+  const equipmentSubtotal = kit.price;
+  const subtotal = equipmentSubtotal + servicesSubtotal;
   const finalPrice = subtotal + margin;
 
   return {
     finalPrice,
     subtotal,
+    equipmentSubtotal,
+    servicesSubtotal,
     margin,
-    marginRate,
+    marginRate: 0,
     marginRateLabel: getMarginRateLabel(plantLoadKw),
     isKit: true,
     kitLabel: kit.label,
@@ -302,7 +305,7 @@ function buildTataKitBreakdown(selections) {
   };
 }
 
-/** Final customer price (equipment + services + conditional profit margin) */
+/** Final customer price = equipment + services + flat margin */
 export function calculateQuote(selections) {
   return calculateQuoteBreakdown(selections)?.finalPrice ?? null;
 }

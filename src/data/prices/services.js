@@ -1,5 +1,6 @@
 /**
  * Labour, wiring, civil & other service charges — separate from equipment prices.
+ * Per-watt lines use total installed panel watts (or plant kW × 1000 for Tata kits).
  */
 
 export const WIRING = {
@@ -13,24 +14,48 @@ export const WIRING = {
   },
   "off-grid": {
     label: "Off-Grid wiring",
-    pricePerFloor: null, // not specified — set when rule is confirmed
+    pricePerFloor: null,
   },
 };
 
 export const INSTALLATION = {
-  label: "Installation labour",
-  pricePerWatt: 2, // ₹2 per watt
-};
-
-export const CIVIL_WORK = {
-  label: "Civil work",
-  pricePerKw: 400, // ₹400 per kW
+  label: "Installation charge",
+  pricePerWatt: 2,
 };
 
 export const INSTALLATION_MATERIAL = {
   label: "Installation material",
-  amount: 14000,
+  pricePerWatt: 3.5,
 };
+
+export const CIVIL_WORK = {
+  label: "Civil work",
+  pricePerWatt: 0.4,
+};
+
+/** Profit margin — plant load ≤ 5 kW → 25%; above 5 kW → 15% */
+export const MARGIN = {
+  thresholdKw: 5,
+  rateUpTo5Kw: 0.25,
+  rateAbove5Kw: 0.15,
+};
+
+/** @deprecated use getMarginRate(plantLoadKw) */
+export const MARGIN_RATE = MARGIN.rateUpTo5Kw;
+
+export function getMarginRate(plantLoadKw) {
+  if (plantLoadKw == null) return MARGIN.rateUpTo5Kw;
+  return plantLoadKw > MARGIN.thresholdKw ? MARGIN.rateAbove5Kw : MARGIN.rateUpTo5Kw;
+}
+
+export function getMarginRateLabel(plantLoadKw) {
+  const rate = getMarginRate(plantLoadKw);
+  return `${Math.round(rate * 100)}%`;
+}
+
+export function calculatePerWattServiceCost(pricePerWatt, totalWatts) {
+  return Math.round(totalWatts * pricePerWatt);
+}
 
 export function getWiringRate(systemType) {
   return WIRING[systemType] ?? null;
@@ -48,14 +73,11 @@ export function calculateWiringCost(systemType, floors) {
 }
 
 export const MISCELLANEOUS = {
-  label: "Miscellaneous (saman)",
+  label: "Devices misc",
   amount: 5000,
 };
 
 export const EQUIPMENT = {
-  label: "Miscellaneous (labour)",
+  label: "Paperwork misc",
   amount: 5000,
 };
-
-/** Applied to subtotal before tax adjustments on final customer price */
-export const MARGIN_RATE = 0.25;

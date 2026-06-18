@@ -4,12 +4,14 @@
 
 import {
   calculateWiringCost,
+  calculatePerWattServiceCost,
   INSTALLATION,
   CIVIL_WORK,
   INSTALLATION_MATERIAL,
   MISCELLANEOUS,
   EQUIPMENT,
-  MARGIN_RATE,
+  getMarginRate,
+  getMarginRateLabel,
   needsWiring,
 } from "../data/prices/services.js";
 import {
@@ -18,8 +20,15 @@ import {
   needsBattery,
 } from "./matching.js";
 import { resolveInverterBrand } from "../data/prices/inverterRules.js";
+import { showInverterPhaseOption } from "../data/quotationOptions.js";
 import { GST } from "../data/prices/taxes.js";
 import { TATA_BRAND, isTataBrand, isTataEligible, getTataKit } from "../data/prices/tata.js";
+
+function resolvePreferSinglePhase(plantLoadKw, systemType, panelCompany, inverterPhase) {
+  if (isTataBrand(panelCompany)) return true;
+  if (!showInverterPhaseOption(plantLoadKw, systemType, false)) return true;
+  return inverterPhase !== "threePhase";
+}
 
 export function isValidSelections(selections) {
   const {
@@ -31,15 +40,17 @@ export function isValidSelections(selections) {
     panelCompany,
     panelWatt,
     inverterBrand,
+    inverterPhase,
   } = selections;
 
   if (!plantLoadKw || !installationType || !systemType || !panelCompany) {
     return false;
   }
 
-  // Tata kit: complete On-Grid 3/4 kW package — no further configuration needed.
   if (isTataBrand(panelCompany)) {
-    return isTataEligible(systemType, plantLoadKw);
+    if (!isTataEligible(systemType, plantLoadKw)) return false;
+    if (needsWiring(systemType) && !floors) return false;
+    return true;
   }
 
   if (!panelWatt) return false;
@@ -48,8 +59,11 @@ export function isValidSelections(selections) {
 
   if (!resolveInverterBrand(systemType, plantLoadKw, inverterBrand)) return false;
 
+  if (showInverterPhaseOption(plantLoadKw, systemType, false) && !inverterPhase) {
+    return false;
+  }
+
   if (systemType === "hybrid" || systemType === "off-grid") {
-    // Battery brand auto-follows the inverter; only the yes/no choice is required.
     if (wantsBattery == null) return false;
   }
 
@@ -57,11 +71,26 @@ export function isValidSelections(selections) {
 }
 
 function calculateInstallationCost(totalWatts) {
-  return Math.round(totalWatts * INSTALLATION.pricePerWatt);
+  return calculatePerWattServiceCost(INSTALLATION.pricePerWatt, totalWatts);
 }
 
-function calculateCivilCost(plantKw) {
-  return Math.round(plantKw * CIVIL_WORK.pricePerKw);
+function calculateInstallationMaterialCost(totalWatts) {
+  return calculatePerWattServiceCost(INSTALLATION_MATERIAL.pricePerWatt, totalWatts);
+}
+
+function calculateCivilCost(totalWatts) {
+  return calculatePerWattServiceCost(CIVIL_WORK.pricePerWatt, totalWatts);
+}
+
+function buildServiceComponents(totalWatts, systemType, floors) {
+  return {
+    wiring: calculateWiringCost(systemType, floors),
+    installation: calculateInstallationCost(totalWatts),
+    installationMaterial: calculateInstallationMaterialCost(totalWatts),
+    civil: calculateCivilCost(totalWatts),
+    miscellaneous: MISCELLANEOUS.amount,
+    equipment: EQUIPMENT.amount,
+  };
 }
 
 /**
@@ -70,10 +99,17 @@ function calculateCivilCost(plantKw) {
 export function calculateQuoteBreakdown(selections) {
   if (!isValidSelections(selections)) return null;
 
-  const { plantLoadKw, systemType, floors, wantsBattery, panelCompany, panelWatt, inverterBrand } =
-    selections;
+  const {
+    plantLoadKw,
+    systemType,
+    floors,
+    wantsBattery,
+    panelCompany,
+    panelWatt,
+    inverterBrand,
+    inverterPhase,
+  } = selections;
 
-  // Tata kit — flat, all-inclusive price (no margin/GST/components added).
   if (isTataBrand(panelCompany)) {
     return buildTataKitBreakdown(selections);
   }
@@ -83,6 +119,12 @@ export function calculateQuoteBreakdown(selections) {
 
   const panelKwp = Math.round((panel.totalWatts / 1000) * 100) / 100;
   const resolvedInverterBrand = resolveInverterBrand(systemType, plantLoadKw, inverterBrand);
+  const preferSinglePhase = resolvePreferSinglePhase(
+    plantLoadKw,
+    systemType,
+    panelCompany,
+    inverterPhase
+  );
 
   const { inverter, battery, error } = selectInverterAndBattery(
     systemType,
@@ -90,30 +132,25 @@ export function calculateQuoteBreakdown(selections) {
     panelKwp,
     resolvedInverterBrand,
     wantsBattery,
-    resolvedInverterBrand
+    resolvedInverterBrand,
+    preferSinglePhase
   );
 
   if (!inverter || error) return null;
   if (needsBattery(systemType, wantsBattery) && !battery) return null;
 
-  const wiring = calculateWiringCost(systemType, floors);
-  const installation = calculateInstallationCost(panel.totalWatts);
-  const civil = calculateCivilCost(plantLoadKw);
+  const serviceComponents = buildServiceComponents(panel.totalWatts, systemType, floors);
+  const marginRate = getMarginRate(plantLoadKw);
 
   const components = {
     panels: panel.cost,
     inverter: inverter.cost,
     battery: battery?.cost ?? 0,
-    wiring,
-    installation,
-    installationMaterial: INSTALLATION_MATERIAL.amount,
-    civil,
-    miscellaneous: MISCELLANEOUS.amount,
-    equipment: EQUIPMENT.amount,
+    ...serviceComponents,
   };
 
   const subtotal = Object.values(components).reduce((s, v) => s + (v ?? 0), 0);
-  const margin = Math.round(subtotal * MARGIN_RATE);
+  const margin = Math.round(subtotal * marginRate);
   const finalPrice = subtotal + margin;
 
   const taxes = {
@@ -131,11 +168,17 @@ export function calculateQuoteBreakdown(selections) {
       : null,
   };
 
+  const phaseLabel =
+    preferSinglePhase || !showInverterPhaseOption(plantLoadKw, systemType, false)
+      ? "Single phase"
+      : "Three phase";
+
   return {
     finalPrice,
     subtotal,
     margin,
-    marginRate: MARGIN_RATE,
+    marginRate,
+    marginRateLabel: getMarginRateLabel(plantLoadKw),
     components,
     taxes,
     matched: {
@@ -143,6 +186,7 @@ export function calculateQuoteBreakdown(selections) {
         plantLoadKw,
         systemType,
         floors: needsWiring(systemType) ? floors : null,
+        inverterPhase: phaseLabel,
         panelTier: panel.dcrLabel,
         panelTierRule:
           systemType === "off-grid"
@@ -166,10 +210,11 @@ export function calculateQuoteBreakdown(selections) {
         model: inverter.modelNo,
         capacityKw: inverter.capacityKw,
         dcBusVoltage: inverter.dcBusVoltage,
+        phase: phaseLabel,
         voltageLabel: inverter.dcBusVoltage
           ? `${inverter.dcBusVoltage}V DC bus`
           : "Grid-tied (no battery bus)",
-        summary: `${inverter.brand} · ${inverter.capacityKw} kW`,
+        summary: `${inverter.brand} · ${inverter.capacityKw} kW · ${phaseLabel}`,
       },
       battery: battery
         ? {
@@ -187,7 +232,7 @@ export function calculateQuoteBreakdown(selections) {
         : null,
       compatibility: {
         panelToLoad: `${panel.panelCount} panels (${panelKwp} kWp) sized for ${plantLoadKw} kW load`,
-        inverterToLoad: `${inverter.capacityKw} kW inverter covers ${panelKwp} kWp panel array (${plantLoadKw} kW load)`,
+        inverterToLoad: `${inverter.capacityKw} kW inverter sized for ${plantLoadKw} kW plant load (${panelKwp} kWp panel array)`,
         batteryToInverter:
           battery && inverter.dcBusVoltage
             ? `${battery.voltage}V battery ↔ ${inverter.dcBusVoltage}V inverter — compatible`
@@ -201,24 +246,34 @@ export function calculateQuoteBreakdown(selections) {
   };
 }
 
-/**
- * Tata kit breakdown — flat all-inclusive price, no margin/GST/component math.
- */
+/** Tata kit — base kit price + standard service lines + conditional profit margin */
 function buildTataKitBreakdown(selections) {
-  const { plantLoadKw, systemType } = selections;
+  const { plantLoadKw, systemType, floors } = selections;
   const kit = getTataKit(systemType, plantLoadKw);
   if (!kit) return null;
 
-  const finalPrice = kit.price;
+  const kitWatts = plantLoadKw * 1000;
+  const serviceComponents = buildServiceComponents(kitWatts, systemType, floors);
+  const marginRate = getMarginRate(plantLoadKw);
+
+  const components = {
+    kit: kit.price,
+    ...serviceComponents,
+  };
+
+  const subtotal = Object.values(components).reduce((s, v) => s + (v ?? 0), 0);
+  const margin = Math.round(subtotal * marginRate);
+  const finalPrice = subtotal + margin;
 
   return {
     finalPrice,
-    subtotal: finalPrice,
-    margin: 0,
-    marginRate: 0,
+    subtotal,
+    margin,
+    marginRate,
+    marginRateLabel: getMarginRateLabel(plantLoadKw),
     isKit: true,
     kitLabel: kit.label,
-    components: null,
+    components,
     taxes: { inverter: null, battery: null },
     matched: {
       isKit: true,
@@ -226,7 +281,7 @@ function buildTataKitBreakdown(selections) {
       system: {
         plantLoadKw,
         systemType,
-        floors: null,
+        floors: needsWiring(systemType) ? floors : null,
         panelTier: null,
         panelTierRule: "Tata complete on-grid kit (factory bundled)",
       },
@@ -247,7 +302,7 @@ function buildTataKitBreakdown(selections) {
   };
 }
 
-/** Final customer price (with 25% margin, or flat kit price for Tata) */
+/** Final customer price (equipment + services + conditional profit margin) */
 export function calculateQuote(selections) {
   return calculateQuoteBreakdown(selections)?.finalPrice ?? null;
 }

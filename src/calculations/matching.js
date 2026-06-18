@@ -8,6 +8,7 @@ import {
   INVERGY_ONGRID,
   INVERGY_HYBRID_LV,
   INVERGY_HYBRID_QUOTE_PRICES,
+  INVERGY_OFFGRID_OGH,
   INVERGY_OFFGRID_OG,
 } from "../data/prices/invergy.js";
 import {
@@ -173,29 +174,51 @@ function pickSmallestInvergyOnGrid(requiredKw, preferSinglePhase = true) {
   return null;
 }
 
-function pickInvergyHybrid(requiredKw) {
-  const quote = INVERGY_HYBRID_QUOTE_PRICES.filter((q) => inverterMeetsRequired(q.capacityKw, requiredKw)).sort(
-    (a, b) => a.msp - b.msp
-  );
+function pickInvergyHybrid(requiredKw, preferSinglePhase = true) {
+  // OGH quote / MSP series are single-phase only.
+  if (preferSinglePhase) {
+    const quoteCandidates = INVERGY_HYBRID_QUOTE_PRICES.filter((i) =>
+      inverterMeetsRequired(i.capacityKw, requiredKw)
+    ).sort((a, b) => a.msp - b.msp || a.capacityKw - b.capacityKw);
 
-  if (quote.length) {
-    const q = quote[0];
-    return attachInverterTax(
-      {
-        brand: "Invergy",
-        modelNo: q.modelNo,
-        capacityKw: q.capacityKw,
-        dcBusVoltage:
-          q.dcBusVoltage ?? parseInverterDcVoltage(q.modelNo) ?? (q.capacityKw <= 5 ? 24 : 48),
-      },
-      q.msp,
-      true
-    );
+    if (quoteCandidates.length) {
+      const q = quoteCandidates[0];
+      const ogh = INVERGY_OFFGRID_OGH.find((o) => o.capacityKw === q.capacityKw);
+      return attachInverterTax(
+        {
+          brand: "Invergy",
+          modelNo: ogh?.modelNo ?? q.modelNo,
+          capacityKw: q.capacityKw,
+          dcBusVoltage: parseInverterDcVoltage(ogh?.modelNo ?? q.modelNo),
+        },
+        q.msp,
+        true
+      );
+    }
+
+    const oghCandidates = INVERGY_OFFGRID_OGH.filter((i) =>
+      inverterMeetsRequired(i.capacityKw, requiredKw)
+    ).sort((a, b) => a.msp - b.msp);
+
+    if (oghCandidates.length) {
+      const inv = oghCandidates[0];
+      return attachInverterTax(
+        {
+          brand: "Invergy",
+          modelNo: inv.modelNo,
+          capacityKw: inv.capacityKw,
+          dcBusVoltage: parseInverterDcVoltage(inv.modelNo),
+        },
+        inv.msp,
+        true
+      );
+    }
   }
 
-  const lv = INVERGY_HYBRID_LV.filter((i) => inverterMeetsRequired(i.capacityKw, requiredKw) && i.phase === "1P").sort(
-    (a, b) => a.msp - b.msp
-  );
+  const phase = preferSinglePhase ? "1P" : "3P";
+  const lv = INVERGY_HYBRID_LV.filter(
+    (i) => inverterMeetsRequired(i.capacityKw, requiredKw) && i.phase === phase
+  ).sort((a, b) => a.msp - b.msp);
 
   if (!lv.length) return null;
 
@@ -253,8 +276,13 @@ function pickInvergyOffGrid(requiredKw) {
   );
 }
 
-export function selectBestInverter(systemType, plantKw, panelKwp, { withBattery = false, inverterBrand = "Invergy" } = {}) {
-  const requiredKw = Math.max(plantKw, panelKwp ?? plantKw);
+export function selectBestInverter(
+  systemType,
+  plantKw,
+  panelKwp,
+  { withBattery = false, inverterBrand = "Invergy", preferSinglePhase = true } = {}
+) {
+  const requiredKw = plantKw;
   const brand = inverterBrand === "Microtek" ? "Microtek" : "Invergy";
 
   if (
@@ -262,12 +290,14 @@ export function selectBestInverter(systemType, plantKw, panelKwp, { withBattery 
     !withBattery
   ) {
     return brand === "Microtek"
-      ? pickMicrotekOnGrid(requiredKw)
-      : pickSmallestInvergyOnGrid(requiredKw);
+      ? pickMicrotekOnGrid(requiredKw, preferSinglePhase)
+      : pickSmallestInvergyOnGrid(requiredKw, preferSinglePhase);
   }
 
   if (systemType === "hybrid" && withBattery) {
-    return brand === "Microtek" ? pickMicrotekHybrid(requiredKw) : pickInvergyHybrid(requiredKw);
+    return brand === "Microtek"
+      ? pickMicrotekHybrid(requiredKw, preferSinglePhase)
+      : pickInvergyHybrid(requiredKw, preferSinglePhase);
   }
 
   if (systemType === "off-grid") {
@@ -285,10 +315,11 @@ function parseBatteryEnergyKwh(model) {
 }
 
 /**
- * Smallest lithium battery from brand that matches inverter DC bus voltage and
- * meets backup sizing for the plant load (not the largest/cheapest 5 kW unit).
+ * Standard lithium battery for the inverter DC voltage bucket.
+ * Client pairs one battery tier per bus: 12 V → 1.2 kW, 24 V → 2.4 kW, 48 V → 5 kW.
+ * Picks the smallest (standard) model in the matching voltage bucket.
  */
-export function selectBestBattery(brand, dcBusVoltage, plantKw) {
+export function selectBestBattery(brand, dcBusVoltage, _plantKw) {
   const bucket = getVoltageBucket(dcBusVoltage);
   if (!bucket) return null;
 
@@ -317,10 +348,7 @@ export function selectBestBattery(brand, dcBusVoltage, plantKw) {
 
   if (!compatible.length) return null;
 
-  // Target ~40% of plant kW for backup; pick smallest battery that meets it
-  const targetKwh = Math.max(1.0, plantKw * 0.4);
-  const adequate = compatible.find((m) => m.energyKwh >= targetKwh);
-  return adequate ?? compatible[0];
+  return compatible[0];
 }
 
 /** Off-grid: pick smallest compatible battery across both brands */
@@ -352,12 +380,14 @@ export function selectInverterAndBattery(
   panelKwp,
   batteryBrand,
   wantsBattery,
-  inverterBrand
+  inverterBrand,
+  preferSinglePhase = true
 ) {
   const withBattery = needsBattery(systemType, wantsBattery);
   const inverter = selectBestInverter(systemType, plantKw, panelKwp, {
     withBattery,
     inverterBrand,
+    preferSinglePhase,
   });
   if (!inverter) return { inverter: null, battery: null };
 

@@ -1,8 +1,6 @@
 /**
- * Tata bundled solar kit — complete On-Grid system at a flat, all-inclusive price.
- * Available ONLY for On-Grid 3 kW and 4 kW (client rule).
- * The price is the final customer price: no margin, GST, or extra component
- * costs are added on top.
+ * Tata bundled solar kit — On-Grid 3 kW / 4 kW base kit price (rate list).
+ * Installation, wiring, misc charges and profit margin are added in calculateQuote.js.
  */
 
 export const TATA_BRAND = "Tata";

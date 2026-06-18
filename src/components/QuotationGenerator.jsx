@@ -4,8 +4,10 @@ import {
   SYSTEM_TYPES,
   PLANT_LOAD_OPTIONS,
   FLOOR_OPTIONS,
+  INVERTER_PHASE_OPTIONS,
   formatINR,
   systemNeedsWiring,
+  showInverterPhaseOption,
   calculateQuoteBreakdown,
   isValidSelections,
   getWattOptionsForCompany,
@@ -242,7 +244,8 @@ function InfoNote({ tone = "info", children }) {
 }
 
 function computeProgress(selections, flags) {
-  const { isTata, tataEligible, showFloorQuestion, showBatteryQuestion, showInverter } = flags;
+  const { isTata, tataEligible, showFloorQuestion, showBatteryQuestion, showInverter, showPhaseQuestion } =
+    flags;
 
   const steps = [
     !!selections.plantLoadKw,
@@ -253,11 +256,13 @@ function computeProgress(selections, flags) {
 
   if (isTata) {
     steps.push(tataEligible);
+    if (showFloorQuestion) steps.push(!!selections.floors);
   } else {
     if (showFloorQuestion) steps.push(!!selections.floors);
     if (showBatteryQuestion) steps.push(selections.wantsBattery != null);
     steps.push(!!selections.panelWatt);
     if (showInverter) steps.push(!!selections.inverterBrand);
+    if (showPhaseQuestion) steps.push(!!selections.inverterPhase);
   }
 
   const done = steps.filter(Boolean).length;
@@ -278,6 +283,7 @@ export default function QuotationGenerator() {
   const [panelCompany, setPanelCompany] = useState("");
   const [panelWatt, setPanelWatt] = useState(null);
   const [inverterBrand, setInverterBrand] = useState("");
+  const [inverterPhase, setInverterPhase] = useState("singlePhase");
   const pdfCacheRef = useRef(null);
   const [pdfSaving, setPdfSaving] = useState(false);
   const [pdfError, setPdfError] = useState(null);
@@ -314,7 +320,8 @@ export default function QuotationGenerator() {
   );
 
   const showBatteryQuestion = !isTata && (systemType === "hybrid" || systemType === "off-grid");
-  const showFloorQuestion = !isTata && (systemType === "on-grid" || systemType === "hybrid");
+  const showFloorQuestion = systemType === "on-grid" || systemType === "hybrid";
+  const showPhaseQuestion = showInverterPhaseOption(plantLoadKw, systemType, isTata);
   const showWattSelector = !isTata && !!systemType && !!panelCompany;
   const showInverter = !isTata && !!systemType && plantLoadKw != null;
 
@@ -356,6 +363,7 @@ export default function QuotationGenerator() {
       panelCompany,
       panelWatt: isTata ? null : panelWatt,
       inverterBrand: resolvedInverterBrand,
+      inverterPhase: showPhaseQuestion ? inverterPhase : "singlePhase",
     }),
     [
       plantLoadKw,
@@ -366,8 +374,10 @@ export default function QuotationGenerator() {
       panelCompany,
       panelWatt,
       resolvedInverterBrand,
+      inverterPhase,
       isTata,
       showFloorQuestion,
+      showPhaseQuestion,
     ]
   );
 
@@ -379,7 +389,7 @@ export default function QuotationGenerator() {
     setPdfError(null);
   }, [wizardStep, quoteRef, breakdown?.finalPrice, customer, selections]);
 
-  const flags = { isTata, tataEligible, showFloorQuestion, showBatteryQuestion, showInverter };
+  const flags = { isTata, tataEligible, showFloorQuestion, showBatteryQuestion, showInverter, showPhaseQuestion };
   const progress = computeProgress(selections, flags);
 
   const systemTypeLabel = SYSTEM_TYPES.find((s) => s.id === systemType)?.label ?? "";
@@ -397,6 +407,7 @@ export default function QuotationGenerator() {
     setWantsBattery(null);
     setFloors(null);
     setInverterBrand("");
+    setInverterPhase("singlePhase");
   }
 
   function handlePlantLoadChange(kw) {
@@ -415,6 +426,7 @@ export default function QuotationGenerator() {
     setPanelCompany("");
     setPanelWatt(null);
     setInverterBrand("");
+    setInverterPhase("singlePhase");
   }
 
   function handleGenerate() {
@@ -625,9 +637,9 @@ export default function QuotationGenerator() {
 
                   {isTata && tataEligible && (
                     <InfoNote>
-                      Complete pre-engineered <strong>Tata on-grid kit</strong> — panels, inverter and accessories are
-                      bundled at a fixed price (₹2,00,000 for 3 kW · ₹2,50,000 for 4 kW). No further configuration
-                      needed.
+                      Complete pre-engineered <strong>Tata on-grid kit</strong> — base kit from rate list
+                      (₹2,00,000 for 3 kW · ₹2,50,000 for 4 kW) plus installation, wiring, misc charges and{" "}
+                      <strong>25% profit margin</strong>.
                     </InfoNote>
                   )}
 
@@ -681,6 +693,23 @@ export default function QuotationGenerator() {
                       compact
                     />
                   )}
+                </div>
+              )}
+
+              {showPhaseQuestion && (
+                <div className="border-t border-slate-100 pt-8">
+                  <SectionTitle
+                    step={nextStep()}
+                    title="Inverter Phase"
+                    subtitle="Three-phase inverters available for plant load 5 kW and above"
+                  />
+                  <OptionCards
+                    options={INVERTER_PHASE_OPTIONS}
+                    value={inverterPhase}
+                    onChange={setInverterPhase}
+                    columns={2}
+                    compact
+                  />
                 </div>
               )}
             </div>

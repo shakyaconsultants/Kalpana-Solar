@@ -159,11 +159,13 @@ panel_cost       = ex_gst_panel × 1.05
 
 ### 4.2 Inverter sizing rule
 
-Inverter must cover the **panel array**, not just plant load:
+Inverter is sized to the **declared plant load (kW)**, not panel kWp:
 
 ```
-required_kw = max(plant_load_kw, panel_kwp)
+required_kw = plant_load_kw
 ```
+
+Panels are sized separately (`ceil(plant_kw × 1000 / watt_per_panel)`). Oversizing the inverter to panel kWp (e.g. picking 5 kW for a 3 kW job because panels total 3.54 kWp) was incorrect and is **not** used.
 
 A model qualifies if:
 
@@ -178,7 +180,7 @@ Smallest qualifying (lowest cost) model is chosen from the selected brand’s ca
 Inverter and battery pricing come **only** from:
 
 1. **Microtek** — Jaganlite price list (`microtek.js`)
-2. **Invergy** — MSP price list (`invergy.js`) + Kalpana hybrid quote overrides (`INVERGY_HYBRID_QUOTE_PRICES`)
+2. **Invergy** — MSP price list (`invergy.js`) + Kalpana hybrid quote overrides (`INVERGY_HYBRID_QUOTE_PRICES`, checked first)
 
 #### On-Grid (no battery)
 
@@ -192,7 +194,7 @@ Inverter and battery pricing come **only** from:
 | Brand | Catalog | Notes |
 |-------|---------|-------|
 | Microtek | `MICROTEK_HYBRID` | DC bus from voltage field (e.g. 48–51.2 V → 48 V bucket) |
-| Invergy | 1) `INVERGY_HYBRID_QUOTE_PRICES` (INV-OGH-3.0K, 5.0K ex-GST) → 2) `INVERGY_HYBRID_LV` MSP | Quote models default 24 V bus if not in model name |
+| Invergy | 1) `INVERGY_HYBRID_QUOTE_PRICES` (INV-OGH-3.0K / 5.0K) → 2) `INVERGY_OFFGRID_OGH` MSP → 3) `INVERGY_HYBRID_LV` MSP | DC bus parsed from OGH model name (e.g. 24 V) |
 
 #### Hybrid (without battery)
 
@@ -260,24 +262,23 @@ Batteries and inverters are matched via **voltage bucket**:
 
 Battery nominal voltage must fall in the **same bucket** as the inverter DC bus.
 
-### 5.4 Size selection (not “cheapest 5 kW”)
+### 5.4 Size selection — one standard tier per voltage bus
 
-```
-target_kwh = max(1.0, plant_load_kw × 0.4)
-```
+Client rule: pair **one standard lithium battery** to the inverter DC voltage bucket:
 
-Among voltage-compatible models, sorted by energy (kWh) ascending:
+| Inverter DC bus | Battery tier |
+|-----------------|--------------|
+| 12 V | 1.2 kW (12 V / 100 Ah) |
+| 24 V | 2.4 kW (24 V / 100 Ah) |
+| 48 V | 5 kW (51.2 V / 100 Ah) |
 
-1. Pick the **smallest** battery with `energy_kwh >= target_kwh`
-2. If none meet target, pick the **smallest available** in that voltage bucket
+Among voltage-compatible models, pick the **smallest standard tier** in that bucket (not a % of plant load).
 
 **Example — 3 kW hybrid + Invergy + battery:**  
-- Inverter ~24 V bus → compatible: 1.2 kW, 2.4 kW  
-- target_kwh = 1.2 → selects **2.4 kW (24 V)**, not 5 kW  
+- Inverter 24 V bus → **2.4 kW (24 V)** battery  
 
 **Example — 3 kW hybrid + Microtek + battery:**  
-- Microtek hybrid 3 kW is **48 V only** → only **5.12 kW** battery exists in catalog  
-- Quote will show 5 kW battery (catalog limitation)
+- Microtek hybrid 3 kW is **48 V only** → **5 kW (51.2 V)** battery (catalog limitation)
 
 ---
 
@@ -292,22 +293,30 @@ Among voltage-compatible models, sorted by energy (kWh) ascending:
 | **Battery** | From brand catalog + 18% GST (0 if no battery) |
 | **Wiring** | On-Grid: ₹3,000 × floors · Hybrid: ₹5,000 × floors · Off-Grid: ₹0 |
 | **Installation labour** | ₹2 × **total panel watts** |
-| **Installation material** | Fixed ₹14,000 |
-| **Civil work** | ₹400 × **plant load kW** |
-| **Miscellaneous (saman)** | Fixed ₹5,000 |
-| **Miscellaneous (labour)** | Fixed ₹5,000 |
+| **Installation material** | ₹3.5 × **total panel watts** |
+| **Civil work** | ₹0.4 × **total panel watts** |
+| **Devices misc** | Fixed ₹5,000 |
+| **Paperwork misc** | Fixed ₹5,000 |
 
 ### 6.2 Margin & final price
 
 ```
 subtotal   = sum of all components above
-margin     = round(subtotal × 0.25)      // 25%
+margin     = round(subtotal × profit_rate)
 final_price = subtotal + margin
+
+profit_rate:
+  plant load ≤ 5 kW  → 25%
+  plant load > 5 kW  → 15%
 ```
 
-Equipment GST (5% inverter, 18% battery) is **included inside each component cost** before margin. The 25% margin is applied to the **subtotal of all components**.
+Equipment GST (5% inverter, 18% battery) is **included inside each component cost** before margin. Profit is applied to the **full subtotal** (equipment + services).
 
-### 6.3 Calculation order (standard path)
+### 6.3 Inverter phase (≥ 5 kW)
+
+For **on-grid** and **hybrid** systems with plant load **≥ 5 kW**, the wizard offers **Single Phase** or **Three Phase**. The matching engine picks from the corresponding 1P or 3P catalog for Microtek / Invergy.
+
+### 6.4 Calculation order (standard path)
 
 ```
 1. Validate selections
@@ -324,16 +333,15 @@ Equipment GST (5% inverter, 18% battery) is **included inside each component cos
 
 ## 7. Tata on-grid kits
 
-| Plant load | System | Final price (all-inclusive) |
-|------------|--------|----------------------------|
-| 3 kW | On-Grid only | **₹2,00,000** |
-| 4 kW | On-Grid only | **₹2,50,000** |
+| Plant load | System | Base kit (rate list) | With services + 25% margin (example, 1 floor) |
+|------------|--------|----------------------|-----------------------------------------------|
+| 3 kW | On-Grid only | **₹2,00,000** | ≈ **₹2,88,375** |
+| 4 kW | On-Grid only | **₹2,50,000** | ≈ **₹3,58,250** |
 
-- No per-watt panel math  
-- No inverter/battery selection  
-- **No 25% margin** added  
-- No separate service line items  
-- PDF shows one bundled kit line + standard BOM accessories  
+- Kit price is **equipment only** (bundled panels + inverter)
+- Same per-watt service lines as standard quotes (install ₹2/W, material ₹3.5/W, civil ₹0.4/W, wiring, misc)
+- **25% profit margin** applied to full subtotal (3 kW & 4 kW are ≤ 5 kW)
+- Building floors required for wiring cost
 
 ---
 
@@ -376,20 +384,20 @@ Full list: `STANDARD_BOM_ITEMS` in `src/data/quotationDocument.js`.
 Plant load:     3 kW
 Panels:         ceil(3000/590) = 6 × 590 W = 3.54 kWp
 Panel cost:     3540 W × ₹29/W × 1.05 ≈ ₹107,793
-Required kW:    max(3, 3.54) = 3.54 → Invergy 3.6 kW on-grid
-Wiring:         1 × ₹3,000 = ₹3,000
-Installation:   3540 × ₹2 = ₹7,080
-Civil:          3 × ₹400 = ₹1,200
-Fixed:          ₹14,000 + ₹5,000 + ₹5,000 = ₹24,000
-→ Subtotal + 25% margin = final price (run wizard to verify exact ₹)
+Inverter:       3 kW on-grid (INV (EU)-E-3 GT-01) ≈ ₹14,983
+Equipment:      ≈ ₹122,776
+Services:       wiring ₹3,000 + install ₹7,080 + civil ₹1,200 + fixed ₹24,000 ≈ ₹35,280
+Subtotal:       ≈ ₹158,056
+Final:          subtotal + 25% margin ≈ ₹197,570
 ```
 
 ### Example B — Hybrid 3 kW + battery, Adani 590 W, Invergy
 
 ```
-Panel kWp:      3.54 kW
-Inverter:       Invergy hybrid quote/LV ≥ 3.54 kW, 24 V bus typical
-Battery:        Invergy 2.4 kW (24 V) — matches 24 V bus, meets 1.2 kWh target
+Plant load:     3 kW → Invergy INV-OGH-3.0K (AVMIIP)-24V @ ₹35,200 quote MSP
+Battery:        Invergy 2.4 kW (24 V) — voltage matched to 24 V bus
+Equipment:      panels + inverter + battery ≈ ₹172,456
+Final (with services + 25% margin): run wizard — lower than using LV-only hybrid catalog
 ```
 
 ### Example C — Hybrid 3 kW + battery, Microtek

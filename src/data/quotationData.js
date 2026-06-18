@@ -13,9 +13,12 @@ export {
   BATTERY_BRANDS,
   PLANT_LOAD_OPTIONS,
   FLOOR_OPTIONS,
+  INVERTER_PHASE_OPTIONS,
+  INVERTER_PHASE_THRESHOLD_KW,
   formatPlantLoad,
   formatFloors,
   systemNeedsWiring,
+  showInverterPhaseOption,
 } from "./quotationOptions.js";
 
 export { formatINR } from "./formatCurrency.js";

@@ -64,3 +64,16 @@ export function formatFloors(floors) {
 export function systemNeedsWiring(systemType) {
   return systemType === "on-grid" || systemType === "hybrid";
 }
+
+/** Three-phase inverter choice — available from 5 kW plant load (on-grid / hybrid) */
+export const INVERTER_PHASE_THRESHOLD_KW = 5;
+
+export const INVERTER_PHASE_OPTIONS = [
+  { id: "singlePhase", label: "Single Phase", desc: "230 V — standard residential" },
+  { id: "threePhase", label: "Three Phase", desc: "380/400 V — commercial / large systems" },
+];
+
+export function showInverterPhaseOption(plantLoadKw, systemType, isTata = false) {
+  if (isTata || plantLoadKw == null || plantLoadKw < INVERTER_PHASE_THRESHOLD_KW) return false;
+  return systemType === "on-grid" || systemType === "hybrid";
+}

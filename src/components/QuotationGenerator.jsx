@@ -529,7 +529,7 @@ export default function QuotationGenerator() {
                 <SectionTitle
                   step={nextStep()}
                   title="Plant Load"
-                  subtitle="Required system capacity (1 – 10 kW)"
+                  subtitle="Required system capacity (1 – 11 kW)"
                 />
                 <FormDropdown
                   value={plantLoadKw}

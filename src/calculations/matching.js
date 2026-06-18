@@ -37,6 +37,7 @@ export function parseInverterDcVoltage(modelNo = "", voltageHint = "") {
   if (/120\s*V|\b120\b/i.test(s)) return 120;
   if (/96\s*V|\b96\b/i.test(s)) return 96;
   if (/51\.2|48\s*-?\s*51|48\s*V|\b48\b/i.test(s)) return 48;
+  if (/3P\s*\(LV\)|-3P\(LV\)/i.test(s)) return 48;
   if (/25\.6|\b24\s*V?\b/i.test(s)) return 24;
   if (/12\.8|\b12\s*V?\b/i.test(s)) return 12;
   const m = s.match(/(\d+(?:\.\d+)?)\s*V/i);
@@ -257,9 +258,9 @@ function pickMicrotekOffGrid(requiredKw) {
 }
 
 function pickInvergyOffGrid(requiredKw) {
-  const candidates = INVERGY_OFFGRID_OG.filter((i) => inverterMeetsRequired(i.capacityKw, requiredKw)).sort(
-    (a, b) => a.msp - b.msp
-  );
+  const candidates = [...INVERGY_OFFGRID_OG, ...INVERGY_OFFGRID_OGH]
+    .filter((i) => inverterMeetsRequired(i.capacityKw, requiredKw))
+    .sort((a, b) => a.msp - b.msp);
 
   if (!candidates.length) return null;
 

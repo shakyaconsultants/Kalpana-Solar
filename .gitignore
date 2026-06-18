@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 script.md
+scripts/
+*.csv
+*.md
+!README.md

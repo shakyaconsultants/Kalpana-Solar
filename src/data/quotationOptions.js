@@ -20,9 +20,9 @@ export const INVERTER_BRANDS = ["Invergy", "Microtek"];
 
 export const BATTERY_BRANDS = ["Microtek", "Invergy"];
 
-/** Plant load options: 1 kW → 10 kW (integer steps only) */
+/** Plant load options: 1 kW → 11 kW (integer steps only) */
 export const PLANT_LOAD_MIN_KW = 1;
-export const PLANT_LOAD_MAX_KW = 10;
+export const PLANT_LOAD_MAX_KW = 11;
 export const PLANT_LOAD_STEP_KW = 1;
 
 export const PLANT_LOAD_OPTIONS = buildPlantLoadOptions(

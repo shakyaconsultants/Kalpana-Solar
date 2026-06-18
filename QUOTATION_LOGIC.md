@@ -44,7 +44,7 @@ Step 3 — Preview + PDF
 
 | Field | Options / rule |
 |-------|----------------|
-| **Plant load** | **1, 2, 3 … 10 kW** (integer steps only — no 0.5 kW) |
+| **Plant load** | **1, 2, 3 … 11 kW** (integer steps only — no 0.5 kW) |
 | **Installation type** | Residential, Commercial |
 | **System type** | On-Grid, Hybrid, Off-Grid |
 | **Panel company** | Adani, Waaree, Vikram, Premier, Tata |

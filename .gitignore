@@ -27,3 +27,6 @@ scripts/
 *.csv
 *.md
 !README.md
+*.zip
+*.xlsx
+*.xls

@@ -1,7 +1,6 @@
 /**
  * Re-exports for components — options, formatting, and quote calculation.
- * Pricing data: src/data/prices/
- * Calculation logic: src/calculations/calculateQuote.js
+ * Canonical catalog: src/engine/data/
  */
 
 export {
@@ -12,6 +11,8 @@ export {
   INVERTER_BRANDS,
   BATTERY_BRANDS,
   PLANT_LOAD_OPTIONS,
+  PLANT_LOAD_MIN_KW,
+  PLANT_LOAD_MAX_KW,
   FLOOR_OPTIONS,
   INVERTER_PHASE_OPTIONS,
   INVERTER_PHASE_THRESHOLD_KW,
@@ -29,12 +30,12 @@ export {
   getWattOption,
   PANEL_WATT_OPTIONS,
   STANDARD_PANEL_COMPANIES,
-} from "./prices/panels.js";
-export {
+  TATA_BRAND,
+  isTataBrand,
+  isTataEligible,
   getAllowedInverterBrands,
   getPreferredInverterBrand,
   getPreferredInverterDescription,
   resolveInverterBrand,
-} from "./prices/inverterRules.js";
-export { TATA_BRAND, isTataBrand, isTataEligible, getTataKit } from "./prices/tata.js";
+} from "./uiCatalog.js";
 export { calculateQuote, calculateQuoteBreakdown, isValidSelections } from "../calculations/calculateQuote.js";

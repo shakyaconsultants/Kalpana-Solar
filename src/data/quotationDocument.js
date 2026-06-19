@@ -184,6 +184,7 @@ export function customerLocation(city) {
 
 export function salutationName(name) {
   if (!name?.trim()) return "Sir/Madam";
-  const n = name.trim();
-  return n.match(/^(mr|mrs|ms|dr)\./i) ? n.toUpperCase() : `MR/MRS.${n.toUpperCase()}`;
+  let n = name.trim().replace(/^(mrs|ms)\.\s*/i, "");
+  if (/^(mr|dr)\./i.test(n)) return n.toUpperCase();
+  return `MR.${n.toUpperCase()}`;
 }

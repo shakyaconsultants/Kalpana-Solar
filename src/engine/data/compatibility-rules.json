@@ -1,0 +1,22 @@
+{
+  "inverter": {
+    "plantLoadToleranceKw": 0.05,
+    "defaultMaxDcOversizingRatio": 1.5,
+    "dcOversizingFormula": "panelKwp <= capacityAcKw * maxDcOversizingRatio",
+    "systemCategoryPrefixes": {
+      "on-grid": "on-grid",
+      "hybrid": "hybrid",
+      "off-grid": "off-grid"
+    }
+  },
+  "battery": {
+    "voltageMatchToleranceV": 1.5,
+    "requiresInverterDcBusWhenRequired": true
+  },
+  "panel": {
+    "sizingFormula": "panelCount = ceil(plantLoadKw * 1000 / panelWatt)"
+  },
+  "kit": {
+    "brandLabel": "Tata"
+  }
+}

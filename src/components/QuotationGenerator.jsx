@@ -3,6 +3,8 @@ import {
   INSTALLATION_TYPES,
   SYSTEM_TYPES,
   PLANT_LOAD_OPTIONS,
+  PLANT_LOAD_MIN_KW,
+  PLANT_LOAD_MAX_KW,
   FLOOR_OPTIONS,
   INVERTER_PHASE_OPTIONS,
   formatINR,
@@ -529,7 +531,7 @@ export default function QuotationGenerator() {
                 <SectionTitle
                   step={nextStep()}
                   title="Plant Load"
-                  subtitle="Required system capacity (1 – 11 kW)"
+                  subtitle={`Required system capacity (${PLANT_LOAD_MIN_KW} – ${PLANT_LOAD_MAX_KW} kW)`}
                 />
                 <FormDropdown
                   value={plantLoadKw}

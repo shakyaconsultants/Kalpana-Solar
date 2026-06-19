@@ -1,0 +1,28 @@
+{
+  "gstRate": 0.05,
+  "companies": [
+    { "id": "adani", "label": "Adani", "priceGroup": "adani_waaree", "wattRestrictions": null },
+    { "id": "waaree", "label": "Waaree", "priceGroup": "adani_waaree", "wattRestrictions": null },
+    { "id": "vikram", "label": "Vikram", "priceGroup": "vikram", "wattRestrictions": { "dcr": [555], "nonDcr": [630] } },
+    { "id": "premier", "label": "Premier", "priceGroup": "vikram", "wattRestrictions": { "dcr": [555], "nonDcr": [630] } }
+  ],
+  "priceGroups": {
+    "adani_waaree": {
+      "dcr": { "topcon": 29, "bifacial": 27 },
+      "nonDcr": { "topcon": 17, "bifacial": null }
+    },
+    "vikram": {
+      "dcr": { "topcon": 27, "bifacial": 25 },
+      "nonDcr": { "topcon": 16, "bifacial": null }
+    }
+  },
+  "wattOptions": [
+    { "id": 555, "category": "bifacial", "watt": 555, "rangeLabel": "540–555 Wp", "label": "555 Wp (540–555 range)" },
+    { "id": 590, "category": "topcon", "watt": 590, "rangeLabel": "580–590 Wp", "label": "590 Wp (580–590 range)" },
+    { "id": 630, "category": "topcon", "watt": 630, "rangeLabel": "600–630 Wp", "label": "630 Wp (600–630 range)" }
+  ],
+  "systemRules": {
+    "dcr": { "systemTypes": ["on-grid", "hybrid"] },
+    "nonDcr": { "systemTypes": ["off-grid"], "allowedWattOptionIds": [630] }
+  }
+}

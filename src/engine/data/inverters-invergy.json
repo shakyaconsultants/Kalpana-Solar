@@ -6,10 +6,6 @@
     "gstRate": 0.05,
     "sourceLabel": "INVERGY PRICE LIST (W.E.F Oct 25)"
   },
-  "hybridQuoteOverrides": [
-    { "modelNo": "INV-OGH-3.0K", "capacityKw": 3, "msp": 35200, "note": "Kalpana quote override — GST inclusive" },
-    { "modelNo": "INV-OGH-5.0K", "capacityKw": 5, "msp": 48000, "note": "Kalpana quote override — GST inclusive" }
-  ],
   "onGrid": [
     { "modelNo": "INV (EU)-E-3 GT-01", "capacityKw": 3, "phase": "1P", "voltage": "230VAC", "msp": 14983 },
     { "modelNo": "INV (EU)-E-3.3 GT-01", "capacityKw": 3.3, "phase": "1P", "voltage": "230VAC", "msp": 15352 },
@@ -65,11 +61,10 @@
     { "modelNo": "INV-OG-3K(VMIIP)-24V", "capacityKw": 3, "msp": 27233 },
     { "modelNo": "INV-OG-5K(VMIIP)-48V", "capacityKw": 5, "msp": 36864 },
     { "modelNo": "INV-OG-4.0K(VM4 T)-48V", "capacityKw": 4, "msp": 39355 },
-    { "modelNo": "INV-OG-6.0K(VM4 T)-48V", "capacityKw": 6, "msp": 45499 }
-  ],
-  "offGridCombos": [
-    { "modelNo": "INV-OGS-0550", "description": "5KW 51.2V 100AH", "msp": 174582 },
-    { "modelNo": "INV-OGS0510", "description": "5KW 51.2V 200AH", "msp": 269809 }
+    { "modelNo": "INV-OG-6.0K(VM4 T)-48V", "capacityKw": 6, "msp": 45499 },
+    { "modelNo": "INV-OG-8.0K(VM4 T)-48V", "capacityKw": 8, "msp": 112661 },
+    { "modelNo": "INV-OG-10.0K(VM4 T)-48V", "capacityKw": 10, "msp": 114641 },
+    { "modelNo": "INV-OG-11.0K(VM4 T)-48V", "capacityKw": 11, "msp": 125062 }
   ],
   "lfpBatteriesReference": {
     "rack": [

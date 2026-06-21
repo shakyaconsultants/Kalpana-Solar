@@ -61,6 +61,10 @@ export function validateRequirements(req, config) {
   if (!req.filters.panelCompany) return false;
   if (req.filters.panelWattId == null && req.filters.kitBrand !== "Tata") return false;
 
+  if (req.filters.kitBrand !== "Tata" && !req.filters.inverterBrand) {
+    return false;
+  }
+
   const phaseThreshold = config.businessRules.phaseThresholdKw ?? 5;
   if (
     req.plantLoadKw >= phaseThreshold &&

@@ -44,6 +44,8 @@ export function buildExplanation(combination) {
       `${battery.brand} ${battery.modelNo} — ${battery.capacityKwh} kWh`,
       battery.compatibilityNote
     );
+  } else if (requirements.batteryRequired && combination.batteryStatus === "unavailable") {
+    compatibilityChecks.push(combination.batteryWarning);
   } else if (!requirements.batteryRequired) {
     compatibilityChecks.push("No battery required for this system configuration");
   }
@@ -64,8 +66,10 @@ export function buildExplanation(combination) {
       inverter: `${inverter.brand} ${inverter.modelNo} — meets ${requirements.plantLoadKw} kW load with ${inverter.maxDcOversizingRatio ?? 1.5}× DC oversizing (group: ${inverter.catalogGroup})`,
       battery: battery
         ? `${battery.brand} ${battery.size} — ${battery.capacityKwh} kWh matched to ${inverter.dcBusVoltage} V bus`
-        : "No battery",
-      overall: `Lowest final price among compatible combinations (₹${finalPrice.toLocaleString("en-IN")}; tiebreaker score ${combination.businessScore})`,
+        : combination.batteryStatus === "unavailable"
+          ? "Battery unavailable — quotation without battery cost"
+          : "No battery",
+      overall: `Smallest sufficient inverter capacity at lowest final price (₹${finalPrice.toLocaleString("en-IN")})`,
     },
   };
 }

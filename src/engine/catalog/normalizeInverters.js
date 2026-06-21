@@ -43,7 +43,6 @@ function makeInverter({
   gstIncluded,
   gstRate = null,
   approved = true,
-  businessPriority = 10,
 }) {
   if (gstRate == null) {
     throw new Error(`gstRate required for ${brand} ${modelNo}`);
@@ -61,7 +60,6 @@ function makeInverter({
     maxDcOversizingRatio,
     price: { amount: priceAmount, gstIncluded, gstRate },
     approved,
-    businessPriority,
   };
 }
 
@@ -88,33 +86,11 @@ export function normalizeInvergyCatalog(catalog) {
         gstIncluded,
         gstRate,
         approved: true,
-        businessPriority: 10,
-      })
-    );
-  }
-
-  for (const item of catalog.hybridQuoteOverrides ?? []) {
-    const ogh = catalog.offGridOgh?.find((o) => o.capacityKw === item.capacityKw);
-    list.push(
-      makeInverter({
-        brand,
-        modelNo: ogh?.modelNo ?? item.modelNo,
-        systemTypes: ["hybrid"],
-        catalogGroup: "hybrid-quote-override",
-        phase: "1P",
-        capacityAcKw: item.capacityKw,
-        dcBusVoltage: extractDcBusVoltage(ogh?.modelNo ?? item.modelNo),
-        priceAmount: item.msp,
-        gstIncluded,
-        gstRate,
-        approved: true,
-        businessPriority: 1,
       })
     );
   }
 
   for (const item of catalog.offGridOgh ?? []) {
-    if (catalog.hybridQuoteOverrides?.some((q) => q.capacityKw === item.capacityKw)) continue;
     list.push(
       makeInverter({
         brand,
@@ -128,7 +104,6 @@ export function normalizeInvergyCatalog(catalog) {
         gstIncluded,
         gstRate,
         approved: true,
-        businessPriority: 5,
       })
     );
   }
@@ -147,7 +122,6 @@ export function normalizeInvergyCatalog(catalog) {
         gstIncluded,
         gstRate,
         approved: true,
-        businessPriority: 15,
       })
     );
   }
@@ -166,7 +140,6 @@ export function normalizeInvergyCatalog(catalog) {
         gstIncluded,
         gstRate,
         approved: true,
-        businessPriority: 8,
       })
     );
   }
@@ -200,7 +173,6 @@ export function normalizeMicrotekCatalog(catalog) {
           gstIncluded,
           gstRate,
           approved: true,
-          businessPriority: 10,
         })
       );
     }
@@ -222,7 +194,6 @@ export function normalizeMicrotekCatalog(catalog) {
           gstIncluded,
           gstRate,
           approved: true,
-          businessPriority: 10,
         })
       );
     }
@@ -242,7 +213,6 @@ export function normalizeMicrotekCatalog(catalog) {
         gstIncluded,
         gstRate,
         approved: true,
-        businessPriority: 10,
       })
     );
   }
@@ -261,7 +231,6 @@ export function normalizeMicrotekCatalog(catalog) {
         gstIncluded,
         gstRate,
         approved: true,
-        businessPriority: 12,
       })
     );
   }

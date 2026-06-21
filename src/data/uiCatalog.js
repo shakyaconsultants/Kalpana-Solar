@@ -4,10 +4,10 @@
 
 import panelsCatalog from "../engine/data/panels.json" with { type: "json" };
 import kitsCatalog from "../engine/data/kits.json" with { type: "json" };
-import pricingConfig from "../engine/data/pricing-config.json" with { type: "json" };
 
 const panels = panelsCatalog;
-const brandRules = pricingConfig.businessRules.brandPreference ?? {};
+
+export const ALLOWED_INVERTER_BRANDS = ["Invergy", "Microtek"];
 
 export const TATA_BRAND = kitsCatalog.brand;
 export const PANEL_GST_RATE = panels.gstRate ?? 0.05;
@@ -72,47 +72,7 @@ export function getWattOptionsForCompany(company, systemType) {
   return systemOpts.filter((o) => allowedIds.includes(o.id));
 }
 
-export function getAllowedInverterBrands(systemType) {
-  const pref = brandRules[systemType];
-  return pref?.allowedBrands ?? ["Invergy", "Microtek"];
-}
-
-export function getPreferredInverterBrand(systemType, plantKw = null) {
-  const pref = brandRules[systemType];
-  if (!pref) return null;
-
-  if (systemType === "on-grid") {
-    return pref.defaultBrand ?? pref.preferredBrand ?? "Invergy";
-  }
-
-  if (systemType === "hybrid" || systemType === "off-grid") {
-    const threshold = pref.belowKw ?? 3;
-    return plantKw != null && plantKw <= threshold ? pref.belowBrand : pref.aboveBrand;
-  }
-
-  return null;
-}
-
-export function getPreferredInverterDescription(systemType, plantKw = null) {
-  if (systemType === "on-grid") return "Preferred for residential on-grid";
-  if (systemType === "hybrid") {
-    const threshold = brandRules.hybrid?.belowKw ?? 3;
-    return plantKw != null && plantKw <= threshold
-      ? "Preferred for hybrid up to 3 kW"
-      : "Preferred for hybrid above 3 kW";
-  }
-  if (systemType === "off-grid") {
-    const threshold = brandRules.off-grid?.belowKw ?? 4;
-    return plantKw != null && plantKw <= threshold
-      ? "Preferred for off-grid up to 4 kW"
-      : "Preferred for off-grid above 4 kW";
-  }
-  return "Preferred option";
-}
-
-export function resolveInverterBrand(systemType, plantKw, selectedBrand) {
-  const allowed = getAllowedInverterBrands(systemType);
-  if (!allowed.length) return null;
-  if (selectedBrand && allowed.includes(selectedBrand)) return selectedBrand;
-  return getPreferredInverterBrand(systemType, plantKw);
+/** Brands the user may select — no default or recommendation applied. */
+export function getAllowedInverterBrands(_systemType) {
+  return ALLOWED_INVERTER_BRANDS;
 }

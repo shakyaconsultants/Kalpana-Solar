@@ -12,8 +12,7 @@
       "compatibleDcVoltages": [12, 12.8],
       "systemTypes": ["hybrid", "off-grid"],
       "price": { "amount": 16000, "gstIncluded": false, "gstRate": 0.18 },
-      "approved": true,
-      "businessPriority": 10
+      "approved": true
     },
     {
       "id": "microtek-2.4kw",
@@ -27,8 +26,7 @@
       "compatibleDcVoltages": [24, 25.6],
       "systemTypes": ["hybrid", "off-grid"],
       "price": { "amount": 32000, "gstIncluded": false, "gstRate": 0.18 },
-      "approved": true,
-      "businessPriority": 10
+      "approved": true
     },
     {
       "id": "microtek-5kw",
@@ -42,8 +40,7 @@
       "compatibleDcVoltages": [48, 51.2],
       "systemTypes": ["hybrid", "off-grid"],
       "price": { "amount": 64000, "gstIncluded": false, "gstRate": 0.18 },
-      "approved": true,
-      "businessPriority": 10
+      "approved": true
     },
     {
       "id": "invergy-1.2kw",
@@ -57,8 +54,7 @@
       "compatibleDcVoltages": [12, 12.8],
       "systemTypes": ["hybrid", "off-grid"],
       "price": { "amount": 15349, "gstIncluded": true, "gstRate": 0.18 },
-      "approved": true,
-      "businessPriority": 10
+      "approved": true
     },
     {
       "id": "invergy-2.4kw",
@@ -72,23 +68,21 @@
       "compatibleDcVoltages": [24, 25.6],
       "systemTypes": ["hybrid", "off-grid"],
       "price": { "amount": 29463, "gstIncluded": true, "gstRate": 0.18 },
-      "approved": true,
-      "businessPriority": 10
+      "approved": true
     },
     {
-      "id": "invergy-5.12kw-wall",
+      "id": "invergy-5.00kw-wall",
       "brand": "Invergy",
       "modelNo": "INV (EU)-5.0 W01-51.2",
-      "size": "5.12KW-WALL MOUNT",
+      "size": "5.00KW-WALL MOUNT",
       "chemistry": "lithium",
-      "capacityKwh": 5.12,
+      "capacityKwh": 5.00,
       "voltage": 51.2,
       "ah": 100,
       "compatibleDcVoltages": [48, 51.2],
       "systemTypes": ["hybrid", "off-grid"],
       "price": { "amount": 70000, "gstIncluded": true, "gstRate": 0.18 },
-      "approved": true,
-      "businessPriority": 10
+      "approved": true
     }
   ]
 }

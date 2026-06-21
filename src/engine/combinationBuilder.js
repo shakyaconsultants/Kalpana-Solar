@@ -3,9 +3,10 @@
  */
 
 import { generatePanelCandidates } from "./matchers/panelMatcher.js";
-import { generateInverterCandidates, getCatalogGroupPriority } from "./matchers/inverterMatcher.js";
+import { generateInverterCandidates } from "./matchers/inverterMatcher.js";
 import { generateBatteryCandidates, rankBatteries } from "./matchers/batteryMatcher.js";
 import { calculateCombinationCost } from "./costCalculator.js";
+import { BATTERY_UNAVAILABLE_WARNING } from "./errors.js";
 
 export function findKit(requirements, catalog) {
   const { plantLoadKw, systemType, filters } = requirements;
@@ -44,13 +45,26 @@ export function buildCombinations(requirements, catalog) {
     for (const inverter of inverters) {
       const batteries = generateBatteryCandidates(inverter, requirements, catalog);
 
-      if (requirements.batteryRequired && batteries.length === 0) continue;
+      let batteryOptions;
+      if (!requirements.batteryRequired) {
+        batteryOptions = [{ battery: null, batteryStatus: null, batteryWarning: null }];
+      } else if (batteries.length === 0) {
+        batteryOptions = [
+          {
+            battery: null,
+            batteryStatus: "unavailable",
+            batteryWarning: BATTERY_UNAVAILABLE_WARNING,
+          },
+        ];
+      } else {
+        batteryOptions = rankBatteries(batteries).map((battery) => ({
+          battery,
+          batteryStatus: "available",
+          batteryWarning: null,
+        }));
+      }
 
-      const batteryOptions = requirements.batteryRequired ? rankBatteries(batteries) : [null];
-
-      for (const battery of batteryOptions) {
-        const businessScore = getCatalogGroupPriority(inverter, requirements, catalog.pricingConfig);
-
+      for (const { battery, batteryStatus, batteryWarning } of batteryOptions) {
         combinations.push(
           calculateCombinationCost({
             requirements,
@@ -59,7 +73,8 @@ export function buildCombinations(requirements, catalog) {
             battery,
             kit: null,
             catalog,
-            businessScore,
+            batteryStatus,
+            batteryWarning,
           })
         );
       }

@@ -34,8 +34,5 @@ export {
   isTataBrand,
   isTataEligible,
   getAllowedInverterBrands,
-  getPreferredInverterBrand,
-  getPreferredInverterDescription,
-  resolveInverterBrand,
 } from "./uiCatalog.js";
 export { calculateQuote, calculateQuoteBreakdown, isValidSelections } from "../calculations/calculateQuote.js";

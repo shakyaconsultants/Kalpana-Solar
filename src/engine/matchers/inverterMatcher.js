@@ -41,13 +41,28 @@ function inverterSupportsSystem(inverter, systemType, batteryRequired, config, r
   return true;
 }
 
+/** Invergy off-grid: OG for plant load ≤6 kW, OGH for plant load >6 kW. */
+export function matchesInvergyOffGridFamily(inverter, plantLoadKw, config) {
+  if (inverter.brand !== "Invergy") return true;
+
+  const maxOgKw = config.businessRules?.invergyOffGridOgMaxKw ?? 6;
+  if (plantLoadKw <= maxOgKw) {
+    return inverter.catalogGroup === "off-grid-og";
+  }
+  return inverter.catalogGroup === "off-grid-ogh";
+}
+
 export function isInverterCompatible(inverter, requirements, panel, rules, config) {
   const { systemType, plantLoadKw, phaseType, batteryRequired, filters } = requirements;
   const tolerance = rules.inverter.plantLoadToleranceKw ?? 0.05;
   const maxRatio = inverter.maxDcOversizingRatio ?? rules.inverter.defaultMaxDcOversizingRatio ?? 1.5;
 
   if (!inverter.approved) return { ok: false, reason: "Inverter not business-approved" };
-  if (filters.inverterBrand && inverter.brand !== filters.inverterBrand) {
+
+  if (!filters.inverterBrand) {
+    return { ok: false, reason: "Inverter brand is required" };
+  }
+  if (inverter.brand !== filters.inverterBrand) {
     return { ok: false, reason: "Inverter brand filter mismatch" };
   }
   if (inverter.phase !== phaseType) return { ok: false, reason: "Phase mismatch" };
@@ -56,6 +71,17 @@ export function isInverterCompatible(inverter, requirements, panel, rules, confi
     return {
       ok: false,
       reason: `Catalog group "${inverter.catalogGroup}" not allowed for ${systemType} system category`,
+    };
+  }
+
+  if (
+    systemType === "off-grid" &&
+    filters.inverterBrand === "Invergy" &&
+    !matchesInvergyOffGridFamily(inverter, plantLoadKw, config)
+  ) {
+    return {
+      ok: false,
+      reason: "Invergy off-grid family rule: OG for load ≤6 kW, OGH for load >6 kW",
     };
   }
 
@@ -78,9 +104,14 @@ export function isInverterCompatible(inverter, requirements, panel, rules, confi
 
 export function generateInverterCandidates(requirements, panel, catalog) {
   const { inverters, compatibilityRules, pricingConfig } = catalog;
+  const selectedBrand = requirements.filters.inverterBrand;
+  if (!selectedBrand) return [];
+
   const results = [];
 
   for (const inv of inverters) {
+    if (inv.brand !== selectedBrand) continue;
+
     const check = isInverterCompatible(inv, requirements, panel, compatibilityRules, pricingConfig);
     if (!check.ok) continue;
 
@@ -95,29 +126,6 @@ export function generateInverterCandidates(requirements, panel, catalog) {
   }
 
   return results;
-}
-
-export function getCatalogGroupPriority(inverter, requirements, config) {
-  const { systemType, batteryRequired } = requirements;
-  const priorities = config.businessRules.inverterCatalogPriority ?? {};
-  const sysKey = systemType;
-  const sysRules = priorities[sysKey];
-  if (!sysRules) return inverter.businessPriority ?? 50;
-
-  let groups;
-  if (systemType === "hybrid") {
-    groups = batteryRequired
-      ? sysRules.withBattery?.default ?? sysRules.default
-      : sysRules.withoutBattery?.default ?? sysRules.default;
-  } else {
-    groups = sysRules.default;
-  }
-
-  if (!groups) return inverter.businessPriority ?? 50;
-
-  const idx = groups.indexOf(inverter.catalogGroup);
-  const groupRank = idx >= 0 ? idx : groups.length + 10;
-  return groupRank * 100 + (inverter.businessPriority ?? 10);
 }
 
 export function validateSystemCategorySelection(systemType, catalogGroup, rules) {

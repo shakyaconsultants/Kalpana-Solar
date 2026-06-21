@@ -15,9 +15,6 @@ import {
   getWattOptionsForCompany,
   getPanelCompaniesForSelection,
   getAllowedInverterBrands,
-  getPreferredInverterBrand,
-  getPreferredInverterDescription,
-  resolveInverterBrand,
   isTataBrand,
   isTataEligible,
 } from "../data/quotationData";
@@ -307,18 +304,8 @@ export default function QuotationGenerator() {
   );
 
   const allowedInverterBrands = useMemo(
-    () => (systemType && plantLoadKw && !isTata ? getAllowedInverterBrands(systemType, plantLoadKw) : []),
+    () => (systemType && plantLoadKw && !isTata ? getAllowedInverterBrands(systemType) : []),
     [systemType, plantLoadKw, isTata]
-  );
-
-  const preferredInverterBrand = useMemo(
-    () => (systemType && plantLoadKw ? getPreferredInverterBrand(systemType, plantLoadKw) : null),
-    [systemType, plantLoadKw]
-  );
-
-  const resolvedInverterBrand = useMemo(
-    () => (isTata ? null : resolveInverterBrand(systemType, plantLoadKw, inverterBrand)),
-    [systemType, plantLoadKw, inverterBrand, isTata]
   );
 
   const showBatteryQuestion = !isTata && (systemType === "hybrid" || systemType === "off-grid");
@@ -364,7 +351,7 @@ export default function QuotationGenerator() {
       wantsBattery: resolvedWantsBattery,
       panelCompany,
       panelWatt: isTata ? null : panelWatt,
-      inverterBrand: resolvedInverterBrand,
+      inverterBrand: isTata ? null : inverterBrand || null,
       inverterPhase: showPhaseQuestion ? inverterPhase : "singlePhase",
     }),
     [
@@ -375,7 +362,8 @@ export default function QuotationGenerator() {
       resolvedWantsBattery,
       panelCompany,
       panelWatt,
-      resolvedInverterBrand,
+      inverterBrand,
+      isTata,
       inverterPhase,
       isTata,
       showFloorQuestion,
@@ -473,11 +461,7 @@ export default function QuotationGenerator() {
   const inverterOptions = allowedInverterBrands.map((b) => ({
     id: b,
     label: b,
-    preferred: b === preferredInverterBrand,
-    desc:
-      b === preferredInverterBrand
-        ? getPreferredInverterDescription(systemType, plantLoadKw)
-        : "Alternative — you may still select this brand",
+    desc: "Select inverter brand for this quotation",
   }));
 
   const wattCardOptions = wattOptions.map((o) => ({

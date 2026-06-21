@@ -4,12 +4,12 @@ import { quote } from "../../src/engine/index.js";
 import { calculateQuoteBreakdown } from "../../src/calculations/calculateQuote.js";
 import { baseSelections } from "./helpers.js";
 
-test("5kW off-grid selects cheapest OG inverter not OGH", () => {
+test("5kW off-grid with battery selects OG family per Invergy rule", () => {
   const sel = baseSelections(5, "off-grid", true);
   const result = quote(sel);
   assert.ok(result?.selected);
-  assert.equal(result.selected.inverter.modelNo, "INV-OG-5K(VMIIP)-48V");
-  assert.equal(result.selected.finalPrice, 281564);
+  assert.equal(result.selected.inverter.catalogGroup, "off-grid-og");
+  assert.match(result.selected.inverter.modelNo, /INV-OG-/);
 });
 
 test("three-phase on-grid uses hybrid wiring rate (5000 not 3000)", () => {

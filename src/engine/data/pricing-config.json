@@ -38,36 +38,6 @@
     "threePhaseUsesHybridWiring": true,
     "tataKitFullyInclusive": true,
     "systemsRequiringWiring": ["on-grid", "hybrid"],
-    "inverterCatalogPriority": {
-      "hybrid": {
-        "withBattery": {
-          "default": ["hybrid-quote-override", "hybrid-lv", "hybrid"]
-        },
-        "withoutBattery": {
-          "default": ["hybrid-lv", "hybrid"]
-        }
-      },
-      "off-grid": {
-        "default": ["off-grid-ogh", "off-grid-og", "off-grid-pwm", "off-grid-mppt"]
-      },
-      "on-grid": {
-        "default": ["on-grid-string", "on-grid-gti"]
-      }
-    },
-    "brandPreference": {
-      "on-grid": { "defaultBrand": "Invergy", "allowedBrands": ["Invergy", "Microtek"] },
-      "hybrid": {
-        "belowKw": 3,
-        "belowBrand": "Microtek",
-        "aboveBrand": "Invergy",
-        "allowedBrands": ["Invergy", "Microtek"]
-      },
-      "off-grid": {
-        "belowKw": 4,
-        "belowBrand": "Microtek",
-        "aboveBrand": "Invergy",
-        "allowedBrands": ["Invergy", "Microtek"]
-      }
-    }
+    "invergyOffGridOgMaxKw": 6
   }
 }

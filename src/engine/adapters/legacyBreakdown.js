@@ -134,9 +134,17 @@ export function engineResultToLegacyBreakdown(result, selections) {
             ah: battery.ah,
             voltageLabel: `${battery.voltage}V / ${battery.ah}Ah`,
             summary: `${battery.brand} ${battery.size}`,
+            status: "available",
             compatibilityNote: explain?.selectionReasons?.battery ?? battery.compatibilityNote,
           }
-        : null,
+        : requirements.batteryRequired && combo.batteryStatus === "unavailable"
+          ? {
+              brand: null,
+              model: null,
+              status: "unavailable",
+              summary: combo.batteryWarning,
+            }
+          : null,
       compatibility: {
         panelToLoad: explain?.selectionReasons?.panel ?? `${panel.panelCount} panels (${panel.installedCapacityKwp} kWp) sized for ${requirements.plantLoadKw} kW load`,
         inverterToLoad:
@@ -150,6 +158,8 @@ export function engineResultToLegacyBreakdown(result, selections) {
     },
     plantLoadKw: requirements.plantLoadKw,
     systemType: requirements.systemType,
+    warnings: combo.batteryWarning ? [combo.batteryWarning] : [],
+    batteryStatus: combo.batteryStatus ?? null,
     engine: result.engineMeta,
   };
 }

@@ -8,8 +8,7 @@
       "plantLoadKw": [3],
       "label": "Tata 3 kW On-Grid Solar Kit",
       "price": { "amount": 200000, "gstIncluded": true, "gstRate": 0.05 },
-      "approved": true,
-      "businessPriority": 5
+      "approved": true
     },
     {
       "id": "tata-4kw-ongrid",
@@ -18,8 +17,7 @@
       "plantLoadKw": [4],
       "label": "Tata 4 kW On-Grid Solar Kit",
       "price": { "amount": 250000, "gstIncluded": true, "gstRate": 0.05 },
-      "approved": true,
-      "businessPriority": 5
+      "approved": true
     }
   ]
 }

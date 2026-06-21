@@ -27,7 +27,7 @@ test("selected quote is cheapest among candidates", () => {
 
 test("explainability cites lowest price selection", () => {
   const result = quote(baseSelections(5, "off-grid", true));
-  assert.match(result.explainability.selectionReasons.overall, /Lowest final price/i);
+  assert.match(result.explainability.selectionReasons.overall, /lowest final price/i);
 });
 
 test("Microtek on-grid 2kW quote succeeds", () => {

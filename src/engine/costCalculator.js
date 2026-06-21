@@ -67,7 +67,16 @@ export function calculateMargin(plantLoadKw, config) {
   return null;
 }
 
-export function calculateCombinationCost({ requirements, panel, inverter, battery, kit, catalog, businessScore = 0 }) {
+export function calculateCombinationCost({
+  requirements,
+  panel,
+  inverter,
+  battery,
+  kit,
+  catalog,
+  batteryStatus = null,
+  batteryWarning = null,
+}) {
   const config = catalog.pricingConfig;
   const totalWatts = kit ? requirements.plantLoadKw * 1000 : panel.totalWatts;
 
@@ -97,7 +106,6 @@ export function calculateCombinationCost({ requirements, panel, inverter, batter
         inverter: null,
         battery: null,
         kit,
-        businessScore,
         equipmentSubtotal,
         servicesSubtotal: 0,
         serviceComponents: emptyServices,
@@ -129,7 +137,8 @@ export function calculateCombinationCost({ requirements, panel, inverter, batter
     inverter,
     battery,
     kit,
-    businessScore,
+    batteryStatus,
+    batteryWarning,
     equipmentSubtotal,
     servicesSubtotal,
     serviceComponents,

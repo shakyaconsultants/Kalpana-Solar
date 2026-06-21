@@ -8,12 +8,15 @@ import {
   validateRequirements,
   selectionsToRequirements,
   CATALOG_UNAVAILABLE_ERROR,
+  INVERTER_UNAVAILABLE_ERROR,
 } from "../engine/index.js";
 import { loadCatalog } from "../engine/catalog/loader.js";
 import { engineResultToLegacyBreakdown } from "../engine/adapters/legacyBreakdown.js";
-import { resolveInverterBrand } from "../data/uiCatalog.js";
 
-export { CATALOG_UNAVAILABLE_ERROR } from "../engine/index.js";
+export {
+  CATALOG_UNAVAILABLE_ERROR,
+  INVERTER_UNAVAILABLE_ERROR,
+} from "../engine/index.js";
 
 export function isValidSelections(selections) {
   const catalog = loadCatalog();
@@ -27,18 +30,14 @@ export function isValidSelections(selections) {
 export function calculateQuoteBreakdown(selections) {
   if (!isValidSelections(selections)) return null;
 
-  const resolved = {
-    ...selections,
-    inverterBrand:
-      selections.inverterBrand ??
-      resolveInverterBrand(selections.systemType, selections.plantLoadKw, selections.inverterBrand),
-  };
+  const engineResult = engineQuote(selections);
 
-  const engineResult = engineQuote(resolved);
-
-  if (engineResult?.error === CATALOG_UNAVAILABLE_ERROR) {
+  if (
+    engineResult?.error === CATALOG_UNAVAILABLE_ERROR ||
+    engineResult?.error === INVERTER_UNAVAILABLE_ERROR
+  ) {
     return {
-      error: CATALOG_UNAVAILABLE_ERROR,
+      error: engineResult.error,
       finalPrice: null,
       quoteFailed: true,
       requirements: engineResult.requirements,
@@ -47,7 +46,7 @@ export function calculateQuoteBreakdown(selections) {
 
   if (!engineResult?.selected) return null;
 
-  return engineResultToLegacyBreakdown(engineResult, resolved);
+  return engineResultToLegacyBreakdown(engineResult, selections);
 }
 
 /** Final customer price = equipment + services + margin */

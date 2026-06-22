@@ -590,7 +590,7 @@ export default function QuotationGenerator() {
                     <div className="mt-3">
                       <InfoNote>
                         A lithium battery is included automatically — matched to your inverter brand
-                        {resolvedInverterBrand ? ` (${resolvedInverterBrand})` : ""} and DC bus voltage.
+                        {inverterBrand ? ` (${inverterBrand})` : ""} and DC bus voltage.
                       </InfoNote>
                     </div>
                   )}
@@ -672,7 +672,7 @@ export default function QuotationGenerator() {
                   ) : (
                     <OptionCards
                       options={inverterOptions}
-                      value={resolvedInverterBrand}
+                      value={inverterBrand}
                       onChange={setInverterBrand}
                       columns={2}
                       compact

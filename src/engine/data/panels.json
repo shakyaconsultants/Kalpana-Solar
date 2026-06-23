@@ -8,12 +8,12 @@
   ],
   "priceGroups": {
     "adani_waaree": {
-      "dcr": { "topcon": 30, "bifacial": 29 },
+      "dcr": { "topcon": 30, "bifacial": 28 },
       "nonDcr": { "topcon": 17, "bifacial": null }
     },
     "vikram": {
-      "dcr": { "topcon": 28, "bifacial": 25 },
-      "nonDcr": { "topcon": 16, "bifacial": null }
+      "dcr": { "topcon": 27, "bifacial": 25 },
+      "nonDcr": { "topcon": 15.5, "bifacial": null }
     }
   },
   "wattOptions": [

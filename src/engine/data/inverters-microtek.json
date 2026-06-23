@@ -31,7 +31,7 @@
   },
   "hybrid": {
     "singlePhase": [
-      { "capacityKw": 3, "voltage": "48-51.2V", "priceExGst": 54000 },
+      { "capacityKw": 3, "voltage": "48-51.2V", "priceExGst": 46000 },
       { "capacityKw": 5, "voltage": "48-51.2V", "priceExGst": 74000 },
       { "capacityKw": 6, "voltage": "48-51.2V", "priceExGst": 86000 },
       { "capacityKw": 8, "voltage": "48-51.2V", "priceExGst": 114000 },

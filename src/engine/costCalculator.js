@@ -23,8 +23,8 @@ export function calculateServices(requirements, totalWatts, config) {
   const wiringRate = sc.wiring[wiringKey]?.pricePerFloor ?? sc.wiring[requirements.systemType]?.pricePerFloor;
   const wiring =
     wiringRate != null &&
-    floors != null &&
-    config.businessRules.systemsRequiringWiring?.includes(requirements.systemType)
+      floors != null &&
+      config.businessRules.systemsRequiringWiring?.includes(requirements.systemType)
       ? wiringRate * floors
       : 0;
 
@@ -32,9 +32,9 @@ export function calculateServices(requirements, totalWatts, config) {
 
   return {
     wiring,
-    installation: Math.round(w * sc.installation.pricePerWatt),
-    installationMaterial: Math.round(w * sc.installationMaterial.pricePerWatt),
-    civil: Math.round(w * sc.civil.pricePerWatt),
+    installation: w * sc.installation.pricePerWatt,
+    installationMaterial: w * sc.installationMaterial.pricePerWatt,
+    civil: w * sc.civil.pricePerWatt,
     miscellaneous: sc.miscellaneous.amount,
     equipment: sc.equipment.amount,
   };
@@ -126,10 +126,23 @@ export function calculateCombinationCost({
   }
 
   const serviceComponents = calculateServices(requirements, totalWatts, config);
-  const servicesSubtotal = sumServices(serviceComponents);
-  const margin = calculateMargin(requirements.plantLoadKw, config);
-  const subtotal = equipmentSubtotal + servicesSubtotal;
-  const finalPrice = subtotal + margin;
+
+  const servicesSubtotalRaw = sumServices(serviceComponents);
+  const servicesSubtotal = Number.isFinite(servicesSubtotalRaw)
+    ? Math.round(servicesSubtotalRaw)
+    : 0;
+
+  const rawMargin = calculateMargin(requirements.plantLoadKw, config);
+  const margin = Number.isFinite(rawMargin) ? Number(rawMargin) : 0;
+
+  const equipment = Number.isFinite(equipmentSubtotal)
+  ? equipmentSubtotal
+  : 0;
+  const subtotal = equipment + servicesSubtotal;
+
+  const finalPrice = Number(subtotal) + margin;
+
+  console.groupEnd();
 
   return {
     requirements,

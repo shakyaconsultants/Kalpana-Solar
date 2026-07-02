@@ -25,7 +25,7 @@ export function engineResultToLegacyBreakdown(result, selections) {
   if (combo.kit) {
     return {
       finalPrice: combo.finalPrice,
-      subtotal: combo.finalPrice,
+      subtotal: combo.finalPrice ?? 0,
       equipmentSubtotal: combo.equipmentSubtotal,
       servicesSubtotal: 0,
       margin: 0,
@@ -69,10 +69,12 @@ export function engineResultToLegacyBreakdown(result, selections) {
 
   return {
     finalPrice: combo.finalPrice,
-    subtotal: combo.subtotal,
-    equipmentSubtotal: combo.equipmentSubtotal,
-    servicesSubtotal: combo.servicesSubtotal,
-    margin: combo.margin,
+    subtotal:
+      (combo.equipmentSubtotal ?? 0) +
+      (combo.servicesSubtotal ?? 0),
+    equipmentSubtotal: combo.equipmentSubtotal ?? 0,
+    servicesSubtotal: combo.servicesSubtotal ?? 0,
+    margin: combo.margin ?? 0,
     marginRate: 0,
     marginRateLabel: marginRateLabel(requirements.plantLoadKw, combo.margin, config),
     components: combo.components,
@@ -84,10 +86,10 @@ export function engineResultToLegacyBreakdown(result, selections) {
       },
       battery: battery
         ? {
-            rate: battery.gstRate,
-            rateLabel: `${Math.round(battery.gstRate * 100)}%`,
-            amount: battery.gstAmount ?? 0,
-          }
+          rate: battery.gstRate,
+          rateLabel: `${Math.round(battery.gstRate * 100)}%`,
+          amount: battery.gstAmount ?? 0,
+        }
         : null,
     },
     matched: {
@@ -127,23 +129,23 @@ export function engineResultToLegacyBreakdown(result, selections) {
       },
       battery: battery
         ? {
-            brand: battery.brand,
-            model: battery.size,
-            id: battery.id,
-            voltage: battery.voltage,
-            ah: battery.ah,
-            voltageLabel: `${battery.voltage}V / ${battery.ah}Ah`,
-            summary: `${battery.brand} ${battery.size}`,
-            status: "available",
-            compatibilityNote: explain?.selectionReasons?.battery ?? battery.compatibilityNote,
-          }
+          brand: battery.brand,
+          model: battery.size,
+          id: battery.id,
+          voltage: battery.voltage,
+          ah: battery.ah,
+          voltageLabel: `${battery.voltage}V / ${battery.ah}Ah`,
+          summary: `${battery.brand} ${battery.size}`,
+          status: "available",
+          compatibilityNote: explain?.selectionReasons?.battery ?? battery.compatibilityNote,
+        }
         : requirements.batteryRequired && combo.batteryStatus === "unavailable"
           ? {
-              brand: null,
-              model: null,
-              status: "unavailable",
-              summary: combo.batteryWarning,
-            }
+            brand: null,
+            model: null,
+            status: "unavailable",
+            summary: combo.batteryWarning,
+          }
           : null,
       compatibility: {
         panelToLoad: explain?.selectionReasons?.panel ?? `${panel.panelCount} panels (${panel.installedCapacityKwp} kWp) sized for ${requirements.plantLoadKw} kW load`,
@@ -152,7 +154,7 @@ export function engineResultToLegacyBreakdown(result, selections) {
           `${inverter.capacityAcKw} kW inverter sized for ${requirements.plantLoadKw} kW plant load (${panel.installedCapacityKwp} kWp panel array)`,
         batteryToInverter: battery
           ? explain?.selectionReasons?.battery ??
-            `${battery.voltage}V battery ↔ ${inverter.dcBusVoltage}V inverter — compatible`
+          `${battery.voltage}V battery ↔ ${inverter.dcBusVoltage}V inverter — compatible`
           : null,
       },
     },
